@@ -15,6 +15,7 @@ export interface ErrorState {
   context?: Record<string, unknown>;
   recoverable: boolean;
   timestamp: number;
+  retryAction?: () => void;
 }
 
 export type ErrorType = 'validation' | 'network' | 'auth' | 'unknown';

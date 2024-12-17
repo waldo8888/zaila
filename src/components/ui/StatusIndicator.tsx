@@ -5,9 +5,15 @@ import { LoadingSpinner } from './LoadingSpinner'
 import { useUIState, useUIActions } from '@/store/hooks'
 import type { ErrorState } from '@/store/types'
 import { useEffect } from 'react'
+import { 
+  ANIMATION_DURATION, 
+  ANIMATION_EASE, 
+  slideUpAnimation, 
+  stateAnimationVariants 
+} from '@/utils/animation'
 
 interface StatusIndicatorProps {
-  className?: string
+  className?: string;
 }
 
 export default function StatusIndicator({ className = "" }: StatusIndicatorProps) {
@@ -16,25 +22,25 @@ export default function StatusIndicator({ className = "" }: StatusIndicatorProps
 
   // Helper to get error message
   const getErrorMessage = (error: ErrorState | null) => {
-    if (!error) return '';
-    return error.message || 'An unexpected error occurred';
+    if (!error) return ''
+    return error.message || 'An unexpected error occurred'
   }
 
   // Auto-hide success message
   useEffect(() => {
     if (success) {
       const timer = setTimeout(() => {
-        setSuccess(false);
-      }, 3000);
-      return () => clearTimeout(timer);
+        setSuccess(false)
+      }, 3000)
+      return () => clearTimeout(timer)
     }
-  }, [success, setSuccess]);
+  }, [success, setSuccess])
 
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ duration: 0.4 }}
+      transition={{ duration: ANIMATION_DURATION.normal, ease: ANIMATION_EASE.smooth }}
       className={`
         fixed bottom-8 left-1/2 -translate-x-1/2
         flex flex-col items-center gap-4
@@ -44,13 +50,14 @@ export default function StatusIndicator({ className = "" }: StatusIndicatorProps
       role="status"
       aria-live="polite"
     >
-      <AnimatePresence>
+      <AnimatePresence mode="wait">
         {isLoading && (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            {...slideUpAnimation}
+            transition={{ 
+              ...stateAnimationVariants.loading.transition,
+              duration: ANIMATION_DURATION.normal 
+            }}
             className="
               bg-gradient-to-b from-white/10 to-white/5
               backdrop-blur-lg
@@ -71,10 +78,11 @@ export default function StatusIndicator({ className = "" }: StatusIndicatorProps
 
         {error && (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            {...slideUpAnimation}
+            transition={{ 
+              ...stateAnimationVariants.error.transition,
+              duration: ANIMATION_DURATION.normal 
+            }}
             className="
               bg-gradient-to-b from-red-500/20 to-red-600/10
               backdrop-blur-lg
@@ -121,10 +129,11 @@ export default function StatusIndicator({ className = "" }: StatusIndicatorProps
 
         {success && (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            {...slideUpAnimation}
+            transition={{ 
+              ...stateAnimationVariants.success.transition,
+              duration: ANIMATION_DURATION.normal 
+            }}
             className="
               bg-gradient-to-b from-emerald-500/20 to-emerald-600/10
               backdrop-blur-lg
