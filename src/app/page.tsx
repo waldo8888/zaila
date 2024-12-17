@@ -1,22 +1,46 @@
 'use client'
 
-import Header from '../components/Header'
-import Scene from '../components/3d/Scene'
+import { useCallback } from 'react'
+import SceneContainer from '../components/3d/SceneContainer'
+import Layout from '../components/ui/Layout'
+import WelcomeMessage from '../components/ui/WelcomeMessage'
+import InputArea from '../components/ui/InputArea'
+import StatusIndicator from '../components/ui/StatusIndicator'
 
 export default function Home() {
+  const handleSubmitAction = useCallback(async (text: string) => {
+    console.log('Message submitted:', text)
+    // TODO: Implement message handling
+  }, [])
+
+  const handleVoiceInputAction = useCallback(async () => {
+    console.log('Voice input requested')
+    // TODO: Implement voice input
+  }, [])
+
   return (
-    <main className="relative min-h-screen bg-gradient-to-b from-gray-900 to-gray-800">
-      <div className="absolute inset-0 z-0">
-        <Scene />
-      </div>
-      <div className="relative z-10">
-        <div className="container mx-auto px-4 py-16">
-          <Header 
-            title="Welcome to Zaila"
-            subtitle="AI-powered operating system for enterprise automation"
-          />
+    <main className="relative">
+      {/* 3D Scene Background */}
+      <SceneContainer className="z-0" />
+
+      {/* Main Content */}
+      <Layout>
+        <div className="relative z-10 space-y-12">
+          {/* Welcome Message */}
+          <WelcomeMessage />
+
+          {/* Input Area */}
+          <div className="w-full max-w-3xl mx-auto px-4">
+            <InputArea
+              submitAction={handleSubmitAction}
+              voiceInputAction={handleVoiceInputAction}
+            />
+          </div>
         </div>
-      </div>
+      </Layout>
+
+      {/* Status Indicators */}
+      <StatusIndicator />
     </main>
   )
 }

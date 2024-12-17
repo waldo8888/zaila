@@ -19,12 +19,16 @@ const OrbWithState = () => {
 
 export default function Scene() {
   return (
-    <div className="relative w-full h-screen">
+    <div className="w-full h-full">
       <OrbStateManager>
         <Canvas>
           <color attach="background" args={['#000815']} />
           <Suspense fallback={null}>
-            <MemoizedEnvironment preset="city" />
+            <MemoizedEnvironment 
+              preset="city" 
+              background={false}
+              blur={0.5}
+            />
           </Suspense>
           <MemoizedLights />
           <Suspense fallback={null}>
@@ -33,5 +37,5 @@ export default function Scene() {
         </Canvas>
       </OrbStateManager>
     </div>
-  )
+  );
 }
