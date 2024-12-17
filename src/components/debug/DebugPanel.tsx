@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useStore } from '@/store';
 import { useOrbState, useOrbActions } from '@/store/hooks';
 import { getStateHistory, clearStateHistory } from '@/store/middleware/debug';
+import { type OrbState } from '../../store/types';
 
 interface DebugPanelProps {
   className?: string;
@@ -14,8 +15,8 @@ export const DebugPanel: React.FC<DebugPanelProps> = ({ className = '' }) => {
   const [activeTab, setActiveTab] = useState<'current' | 'history'>('current');
   const [history, setHistory] = useState(getStateHistory());
   const store = useStore();
-  const orbState = useOrbState();
-  const { setAnimationState, setInteractionMode } = useOrbActions();
+  const { animationState, interactionMode, animationSpeed } = useOrbState();
+  const { setAnimationState, setInteractionMode, setOrbAnimationSpeed } = useOrbActions();
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -74,6 +75,8 @@ export const DebugPanel: React.FC<DebugPanelProps> = ({ className = '' }) => {
     ));
   };
 
+  const states: OrbState['animationState'][] = ['idle', 'processing', 'success', 'error'];
+
   return (
     <div
       className={`fixed bottom-4 right-4 bg-gray-900 text-white rounded-lg shadow-lg ${className}`}
@@ -116,60 +119,50 @@ export const DebugPanel: React.FC<DebugPanelProps> = ({ className = '' }) => {
           <div className="mb-4 p-4 bg-gray-800 rounded-lg">
             <h4 className="text-sm text-gray-400 mb-2">Orb Controls</h4>
             <div className="grid grid-cols-2 gap-2">
-              <button
-                onClick={() => setAnimationState('idle')}
-                className={`px-3 py-2 rounded ${
-                  orbState.animationState === 'idle'
-                    ? 'bg-blue-500'
-                    : 'bg-gray-700'
-                }`}
-              >
-                Idle
-              </button>
-              <button
-                onClick={() => setAnimationState('processing')}
-                className={`px-3 py-2 rounded ${
-                  orbState.animationState === 'processing'
-                    ? 'bg-blue-500'
-                    : 'bg-gray-700'
-                }`}
-              >
-                Processing
-              </button>
-              <button
-                onClick={() => setAnimationState('success')}
-                className={`px-3 py-2 rounded ${
-                  orbState.animationState === 'success'
-                    ? 'bg-blue-500'
-                    : 'bg-gray-700'
-                }`}
-              >
-                Success
-              </button>
-              <button
-                onClick={() => setAnimationState('error')}
-                className={`px-3 py-2 rounded ${
-                  orbState.animationState === 'error'
-                    ? 'bg-blue-500'
-                    : 'bg-gray-700'
-                }`}
-              >
-                Error
-              </button>
+              {states.map((state) => (
+                <button
+                  key={state}
+                  onClick={() => setAnimationState(state)}
+                  className={`px-3 py-2 rounded ${
+                    animationState === state
+                      ? 'bg-blue-500'
+                      : 'bg-gray-700'
+                  }`}
+                >
+                  {state}
+                </button>
+              ))}
             </div>
             <div className="mt-2">
               <button
-                onClick={() => setInteractionMode(
-                  orbState.interactionMode === 'active' ? 'passive' : 'active'
-                )}
+                onClick={() =>
+                  setInteractionMode(
+                    interactionMode === 'active' ? 'passive' : 'active'
+                  )
+                }
                 className={`w-full px-3 py-2 rounded ${
-                  orbState.interactionMode === 'active'
+                  interactionMode === 'active'
                     ? 'bg-green-500'
                     : 'bg-gray-700'
                 }`}
               >
-                {orbState.interactionMode === 'active' ? 'Active Mode' : 'Passive Mode'}
+                {interactionMode === 'active' ? 'Active Mode' : 'Passive Mode'}
               </button>
+            </div>
+            <div className="mt-2">
+              <h4 className="text-sm text-gray-400 mb-1">Animation Speed</h4>
+              <input
+                type="range"
+                min="0"
+                max="2"
+                step="0.1"
+                value={animationSpeed}
+                onChange={(e) => setOrbAnimationSpeed(parseFloat(e.target.value))}
+                className="w-full"
+              />
+              <div className="text-sm text-gray-400 mt-1">
+                Speed: {animationSpeed.toFixed(1)}x
+              </div>
             </div>
           </div>
 

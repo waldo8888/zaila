@@ -35,18 +35,15 @@ export interface UIState {
 export interface OrbState {
   animationState: 'idle' | 'processing' | 'success' | 'error';
   interactionMode: 'active' | 'passive';
+  animationSpeed: number;
 }
 
 // Session State types
 export interface SessionState {
   context: Record<string, unknown>;
-  lastActive: number | null;
   isActive: boolean;
-  metadata: {
-    version: number;
-    createdAt: number;
-    updatedAt: number;
-  };
+  lastActive: number | null;
+  metadata: Record<string, unknown>;
 }
 
 // Combined store state type
@@ -71,12 +68,13 @@ export interface StoreActions {
   // Orb actions
   setOrbAnimationState: (state: OrbState['animationState']) => void;
   setOrbInteractionMode: (mode: OrbState['interactionMode']) => void;
+  setOrbAnimationSpeed: (speed: number) => void;
   
   // Session actions
   updateContext: (context: Record<string, unknown>) => void;
   clearContext: () => void;
   setSessionActive: (isActive: boolean) => void;
-  updateSessionMetadata: (metadata: Partial<SessionState['metadata']>) => void;
+  updateSessionMetadata: (metadata: Record<string, unknown>) => void;
 }
 
 // Combined store type

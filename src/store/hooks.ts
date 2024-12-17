@@ -35,6 +35,8 @@ export const useOrbActions = () => {
       store.setOrbAnimationState(state),
     setInteractionMode: (mode: OrbState['interactionMode']) =>
       store.setOrbInteractionMode(mode),
+    setOrbAnimationSpeed: (speed: OrbState['animationSpeed']) =>
+      store.setOrbAnimationSpeed(speed)
   };
 };
 

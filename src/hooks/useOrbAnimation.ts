@@ -1,8 +1,8 @@
 import { useRef } from 'react'
 import { Vector3, Euler } from 'three'
-import { type OrbState } from '../types/orb'
+import { type OrbState } from '../store/types'
 
-const getStateConfig = (state: OrbState) => {
+const getStateConfig = (state: OrbState['animationState']) => {
   switch (state) {
     case 'processing':
       return {
@@ -35,7 +35,7 @@ const getStateConfig = (state: OrbState) => {
   }
 }
 
-export const useOrbAnimation = (state: OrbState) => {
+export const useOrbAnimation = (state: OrbState['animationState']) => {
   const positionRef = useRef(new Vector3())
   const rotationRef = useRef(new Euler())
   const config = getStateConfig(state)
