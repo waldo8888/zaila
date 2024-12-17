@@ -1,17 +1,45 @@
 import React from 'react';
 import { useLoading } from '@/store/hooks';
 
-export const LoadingSpinner: React.FC = () => {
+interface LoadingSpinnerProps {
+  size?: 'small' | 'medium' | 'large'
+  className?: string
+}
+
+export const LoadingSpinner = ({ size = 'medium', className = '' }: LoadingSpinnerProps) => {
   const isLoading = useLoading();
+  const sizeClasses = {
+    small: 'h-4 w-4 border-2',
+    medium: 'h-8 w-8 border-3',
+    large: 'h-12 w-12 border-4'
+  }
 
   if (!isLoading) return null;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
-      <div className="relative">
-        <div className="h-16 w-16 rounded-full border-4 border-t-blue-500 border-r-transparent border-b-blue-500 border-l-transparent animate-spin"></div>
-        <div className="mt-4 text-white text-center">Loading...</div>
-      </div>
+    <div 
+      className={`
+        fixed inset-0
+        flex items-center justify-center
+        bg-black/50 z-50
+        ${className}
+      `}
+      role="status"
+      aria-label="Loading"
+    >
+      <div
+        className={`
+          relative
+          rounded-full
+          border-t-white
+          border-r-transparent
+          border-b-white/50
+          border-l-transparent
+          animate-spin
+          ${sizeClasses[size]}
+        `}
+      />
+      <span className="sr-only">Loading...</span>
     </div>
-  );
+  )
 };

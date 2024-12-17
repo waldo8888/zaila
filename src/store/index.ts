@@ -6,16 +6,7 @@ import { errorMiddleware } from './middleware/error';
 const initialState: StoreState = {
   ui: {
     isLoading: false,
-    error: {
-      type: null,
-      message: null,
-      timestamp: null,
-      context: null,
-      retryCount: 0,
-      recoverable: true,
-      retryAction: undefined,
-      clearAction: undefined,
-    },
+    error: null,
     success: false,
   },
   orb: {
@@ -49,7 +40,16 @@ const createStore = errorMiddleware<Store>((set, get) => {
       set((state) => ({
         ui: {
           ...state.ui,
-          error: error ? { ...state.ui.error, ...error } : initialState.ui.error,
+          error: error === null ? null : {
+            type: error.type || 'unknown',
+            message: error.message || 'An unexpected error occurred',
+            timestamp: error.timestamp || Date.now(),
+            context: error.context || {},
+            retryCount: error.retryCount || 0,
+            recoverable: error.recoverable ?? true,
+            retryAction: error.retryAction || (() => {}),
+            clearAction: error.clearAction || (() => {})
+          }
         },
       })),
 
@@ -61,7 +61,7 @@ const createStore = errorMiddleware<Store>((set, get) => {
     // Error Actions
     clearError: () =>
       set((state) => ({
-        ui: { ...state.ui, error: initialState.ui.error },
+        ui: { ...state.ui, error: null },
       })),
 
     retryLastAction: () => {
@@ -83,7 +83,7 @@ const createStore = errorMiddleware<Store>((set, get) => {
 
     resetErrorState: () =>
       set((state) => ({
-        ui: { ...state.ui, error: initialState.ui.error },
+        ui: { ...state.ui, error: null },
       })),
 
     // Orb Actions

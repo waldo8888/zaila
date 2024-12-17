@@ -10,24 +10,23 @@ export type ErrorType =
   | 'authorization'
   | 'server'
   | 'client'
-  | 'unknown'
-  | null;
+  | 'unknown';
 
 export interface ErrorState {
   type: ErrorType;
-  message: string | null;
-  timestamp: number | null;
-  context: Record<string, unknown> | null;
+  message: string;
+  timestamp: number;
+  context: Record<string, unknown>;
   retryCount: number;
   recoverable: boolean;
-  retryAction?: () => void;
-  clearAction?: () => void;
+  retryAction: () => void;
+  clearAction: () => void;
 }
 
 // UI State types
 export interface UIState {
   isLoading: boolean;
-  error: ErrorState;
+  error: ErrorState | null;
   success: boolean;
 }
 

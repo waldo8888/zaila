@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback } from 'react'
+import { useUIState, useUIActions } from '@/store/hooks'
 import SceneContainer from '../components/3d/SceneContainer'
 import Layout from '../components/ui/Layout'
 import WelcomeMessage from '../components/ui/WelcomeMessage'
@@ -8,15 +9,58 @@ import InputArea from '../components/ui/InputArea'
 import StatusIndicator from '../components/ui/StatusIndicator'
 
 export default function Home() {
+  const { isLoading } = useUIState()
+  const { setLoading, setError, setSuccess } = useUIActions()
+
   const handleSubmitAction = useCallback(async (text: string) => {
-    console.log('Message submitted:', text)
-    // TODO: Implement message handling
-  }, [])
+    if (isLoading) return
+
+    try {
+      setLoading(true)
+      console.log('Message submitted:', text)
+      // TODO: Implement message handling
+      throw new Error('Message handling not yet implemented')
+    } catch (error) {
+      console.error('Error submitting message:', error)
+      setError({
+        type: 'client',
+        message: 'Message handling not yet implemented',
+        timestamp: Date.now(),
+        context: { error: error instanceof Error ? error.message : String(error) },
+        retryCount: 0,
+        recoverable: true,
+        retryAction: () => handleSubmitAction(text),
+        clearAction: () => setError(null)
+      })
+    } finally {
+      setLoading(false)
+    }
+  }, [isLoading, setLoading, setError])
 
   const handleVoiceInputAction = useCallback(async () => {
-    console.log('Voice input requested')
-    // TODO: Implement voice input
-  }, [])
+    if (isLoading) return
+
+    try {
+      setLoading(true)
+      console.log('Voice input requested')
+      // TODO: Implement voice input
+      throw new Error('Voice input not yet implemented')
+    } catch (error) {
+      console.error('Error activating voice input:', error)
+      setError({
+        type: 'client',
+        message: 'Voice input not yet implemented',
+        timestamp: Date.now(),
+        context: { error: error instanceof Error ? error.message : String(error) },
+        retryCount: 0,
+        recoverable: true,
+        retryAction: () => handleVoiceInputAction(),
+        clearAction: () => setError(null)
+      })
+    } finally {
+      setLoading(false)
+    }
+  }, [isLoading, setLoading, setError])
 
   return (
     <main className="relative w-full min-h-screen">
