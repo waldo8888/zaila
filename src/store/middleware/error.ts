@@ -1,5 +1,5 @@
-import { type StateCreator } from 'zustand';
-import { type Store, type ErrorState, type ErrorType } from '../types';
+import { StateCreator } from 'zustand';
+import { ErrorState, ErrorType, Store } from '../types';
 
 export const createErrorState = (
   type: ErrorType,
@@ -9,47 +9,32 @@ export const createErrorState = (
 ): ErrorState => ({
   type,
   message,
-  timestamp: Date.now(),
   context,
-  retryCount: 0,
   recoverable,
-  retryAction: () => {},
-  clearAction: () => {},
+  timestamp: Date.now(),
 });
 
-export const errorMiddleware = (
-  config: StateCreator<Store, [], []>
-): StateCreator<Store, [], []> => 
-  (...args) => {
-    const store = config(...args);
-    const [set] = args;
+export const errorMiddleware = <T extends Store>(
+  config: StateCreator<T>
+): StateCreator<T> => (set, get, api) => {
+  return config(
+    (partial, replace) => {
+      const nextState = typeof partial === 'function' ? partial(get()) : partial;
 
-    // Wrap state updates with error handling
-    const wrappedSet: typeof set = (partial, replace) => {
+      // Handle errors in state updates
       try {
-        return set(partial, replace);
+        set(nextState, replace);
       } catch (error) {
-        console.error('Error in state update:', error);
-        
-        // Update error state
-        set({
-          ui: {
-            ...store.ui,
-            error: createErrorState(
-              'client',
-              error instanceof Error ? error.message : 'Unknown error occurred',
-              { error },
-              true
-            ),
-          },
-        });
-        
-        return store;
+        const errorState = createErrorState(
+          'unknown',
+          error instanceof Error ? error.message : 'An unknown error occurred',
+          { error },
+          true
+        );
+        set({ ui: { ...get().ui, error: errorState } } as T);
       }
-    };
-
-    return {
-      ...store,
-      setState: wrappedSet,
-    };
-  };
+    },
+    get,
+    api
+  );
+};

@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useStore } from '@/store';
-import { type ErrorType, type ErrorState } from '../types';
+import { ErrorState, ErrorType } from '../slices/types';
 import { createErrorState } from '../middleware/error';
 
 export const useUI = () => {
@@ -35,7 +35,6 @@ export const useUI = () => {
         store.setError(null);
         
         const result = await operation();
-        
         store.setSuccess(true);
         return result;
       } catch (error) {
@@ -57,8 +56,6 @@ export const useUI = () => {
     setError,
     setSuccess: store.setSuccess,
     clearError: store.clearError,
-    retryLastAction: store.retryLastAction,
-    resetErrorState: store.resetErrorState,
     handleAsyncOperation,
   };
 };
