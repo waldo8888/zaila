@@ -1,12 +1,19 @@
-'use client'
-
 import React, { createContext, useContext, useCallback, useRef, useState } from 'react';
 import { create } from 'zustand';
 import { motion, AnimatePresence } from 'framer-motion';
 
+interface StatusMessage {
+  id: string;
+  text: string;
+  type: 'status' | 'error' | 'progress' | 'success';
+  politeness: 'polite' | 'assertive';
+  timestamp: number;
+}
+
 interface AccessibilityState {
-  announcements: string[];
-  addAnnouncement: (message: string) => void;
+  announcements: StatusMessage[];
+  addAnnouncement: (message: Omit<StatusMessage, 'id' | 'timestamp'>) => void;
+  removeAnnouncement: (id: string) => void;
   clearAnnouncements: () => void;
   ariaLabels: Map<string, string>;
   setAriaLabel: (id: string, label: string) => void;
@@ -18,8 +25,21 @@ interface AccessibilityState {
 
 const useAccessibilityStore = create<AccessibilityState>((set) => ({
   announcements: [],
-  addAnnouncement: (message) => 
-    set((state) => ({ announcements: [...state.announcements, message] })),
+  addAnnouncement: (message) =>
+    set((state) => ({
+      announcements: [
+        ...state.announcements,
+        {
+          ...message,
+          id: Math.random().toString(36).substr(2, 9),
+          timestamp: Date.now(),
+        },
+      ],
+    })),
+  removeAnnouncement: (id) =>
+    set((state) => ({
+      announcements: state.announcements.filter((msg) => msg.id !== id),
+    })),
   clearAnnouncements: () => set({ announcements: [] }),
   ariaLabels: new Map(),
   setAriaLabel: (id, label) =>
@@ -50,25 +70,45 @@ const useAccessibilityStore = create<AccessibilityState>((set) => ({
 }));
 
 interface AccessibilityContextType {
-  announce: (message: string) => void;
+  announce: (message: string, type?: 'status' | 'error' | 'progress' | 'success') => void;
+  announceError: (message: string) => void;
+  announceProgress: (message: string) => void;
+  announceSuccess: (message: string) => void;
   setLabel: (id: string, label: string) => void;
   removeLabel: (id: string) => void;
   setDescription: (id: string, description: string) => void;
   removeDescription: (id: string) => void;
-  setFocusTarget: (id: string) => void;
 }
 
 const AccessibilityContext = createContext<AccessibilityContextType | null>(null);
 
 export const AccessibilityProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const store = useAccessibilityStore();
-  const [liveRegionKey, setLiveRegionKey] = useState(0);
+  const [visualKey, setVisualKey] = useState(0);
   
-  const announce = useCallback((message: string) => {
-    store.addAnnouncement(message);
-    setLiveRegionKey(prev => prev + 1);
-    setTimeout(() => store.clearAnnouncements(), 3000);
+  const announce = useCallback((
+    message: string,
+    type: 'status' | 'error' | 'progress' | 'success' = 'status'
+  ) => {
+    const politeness = type === 'error' ? 'assertive' : 'polite';
+    store.addAnnouncement({ text: message, type, politeness });
+    setVisualKey(prev => prev + 1);
+    setTimeout(() => {
+      store.clearAnnouncements();
+    }, 5000);
   }, [store]);
+
+  const announceError = useCallback((message: string) => {
+    announce(message, 'error');
+  }, [announce]);
+
+  const announceProgress = useCallback((message: string) => {
+    announce(message, 'progress');
+  }, [announce]);
+
+  const announceSuccess = useCallback((message: string) => {
+    announce(message, 'success');
+  }, [announce]);
 
   const setLabel = useCallback((id: string, label: string) => {
     store.setAriaLabel(id, label);
@@ -86,53 +126,54 @@ export const AccessibilityProvider: React.FC<{ children: React.ReactNode }> = ({
     store.removeAriaDescription(id);
   }, [store]);
 
-  const setFocusTarget = useCallback((id: string) => {
-    const element = document.getElementById(id)
-    if (element) {
-      element.focus()
-    }
-  }, [])
-
   return (
     <AccessibilityContext.Provider 
       value={{ 
-        announce, 
-        setLabel, 
-        removeLabel, 
-        setDescription, 
-        removeDescription,
-        setFocusTarget
+        announce,
+        announceError,
+        announceProgress,
+        announceSuccess,
+        setLabel,
+        removeLabel,
+        setDescription,
+        removeDescription
       }}
     >
       {children}
-      <div
-        key={liveRegionKey}
-        role="status"
-        aria-live="polite"
-        aria-atomic="true"
-        className="sr-only"
-      >
-        {store.announcements.join(' ')}
-      </div>
 
-      {/* Visual announcement for sighted users */}
-      <AnimatePresence>
+      {/* Live regions for screen reader announcements */}
+      {store.announcements.map((announcement) => (
+        <div
+          key={announcement.id}
+          role={announcement.type === 'error' ? 'alert' : 'status'}
+          aria-live={announcement.politeness}
+          aria-atomic="true"
+          className="sr-only"
+        >
+          {announcement.text}
+        </div>
+      ))}
+
+      {/* Visual announcements for sighted users */}
+      <AnimatePresence mode="wait">
         {store.announcements.length > 0 && (
           <motion.div
+            key={visualKey}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.2 }}
             className="
-              fixed bottom-4 left-1/2 -translate-x-1/2
-              bg-black/80 text-white
-              px-4 py-2 rounded-lg
-              text-sm font-medium
-              pointer-events-none
+              fixed bottom-4 right-4
+              px-4 py-2
+              bg-gray-800
+              text-white
+              rounded-lg
+              shadow-lg
               z-50
             "
-            role="status"
           >
-            {store.announcements.join(' ')}
+            {store.announcements[store.announcements.length - 1].text}
           </motion.div>
         )}
       </AnimatePresence>
