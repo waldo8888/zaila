@@ -13,10 +13,15 @@ export const useOrbAnimationState = () =>
   useStore((state) => state.orb.animationState);
 export const useOrbInteractionMode = () =>
   useStore((state) => state.orb.interactionMode);
+export const useOrbAnimationSpeed = () =>
+  useStore((state) => state.orb.animationSpeed);
 
 // Type-safe selector hooks for Session state
 export const useSessionState = () => useStore((state) => state.session);
 export const useSessionContext = () => useStore((state) => state.session.context);
+export const useSessionMetadata = () => useStore((state) => state.session.metadata);
+export const useSessionActive = () => useStore((state) => state.session.isActive);
+export const useLastActive = () => useStore((state) => state.session.lastActive);
 
 // Type-safe action hooks
 export const useUIActions = () => ({

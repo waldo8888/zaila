@@ -1,7 +1,8 @@
-import { create } from 'zustand';
+import { create, type StateCreator } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { type Store, type StoreState, type ErrorState, type SessionState, type OrbState } from './types';
 import { errorMiddleware } from './middleware/error';
+import { persistMiddleware } from './middleware/persist';
 
 const initialState: StoreState = {
   ui: {
@@ -26,122 +27,130 @@ const initialState: StoreState = {
   },
 };
 
-const createStore = errorMiddleware<Store>((set, get) => {
-  const store: Store = {
-    ...initialState,
+const createStore = persistMiddleware(
+  errorMiddleware<Store>((set, get) => {
+    const store: Store = {
+      ...initialState,
 
-    // UI Actions
-    setLoading: (isLoading: boolean) =>
-      set((state) => ({
-        ui: { ...state.ui, isLoading },
-      })),
+      // UI Actions
+      setLoading: (isLoading: boolean) =>
+        set((state) => ({
+          ui: { ...state.ui, isLoading },
+        })),
 
-    setError: (error: Partial<ErrorState> | null) =>
-      set((state) => ({
-        ui: {
-          ...state.ui,
-          error: error === null ? null : {
-            type: error.type || 'unknown',
-            message: error.message || 'An unexpected error occurred',
-            timestamp: error.timestamp || Date.now(),
-            context: error.context || {},
-            retryCount: error.retryCount || 0,
-            recoverable: error.recoverable ?? true,
-            retryAction: error.retryAction || (() => {}),
-            clearAction: error.clearAction || (() => {})
-          }
-        },
-      })),
-
-    setSuccess: (success: boolean) =>
-      set((state) => ({
-        ui: { ...state.ui, success },
-      })),
-
-    // Error Actions
-    clearError: () =>
-      set((state) => ({
-        ui: { ...state.ui, error: null },
-      })),
-
-    retryLastAction: () => {
-      const state = get();
-      const currentError = state.ui.error;
-      if (currentError && currentError.retryAction) {
+      setError: (error: Partial<ErrorState> | null) =>
         set((state) => ({
           ui: {
             ...state.ui,
-            error: {
-              ...currentError,
-              retryCount: currentError.retryCount + 1,
-            },
+            error: error === null ? null : {
+              type: error.type || 'unknown',
+              message: error.message || 'An unexpected error occurred',
+              timestamp: error.timestamp || Date.now(),
+              context: error.context || {},
+              retryCount: error.retryCount || 0,
+              recoverable: error.recoverable ?? true,
+              retryAction: error.retryAction || (() => {}),
+              clearAction: error.clearAction || (() => {})
+            }
           },
-        }));
-        currentError.retryAction();
-      }
-    },
+        })),
 
-    resetErrorState: () =>
-      set((state) => ({
-        ui: { ...state.ui, error: null },
-      })),
+      setSuccess: (success: boolean) =>
+        set((state) => ({
+          ui: { ...state.ui, success },
+        })),
 
-    // Orb Actions
-    setOrbAnimationState: (animationState: OrbState['animationState']) =>
-      set((state) => ({
-        orb: { ...state.orb, animationState },
-      })),
+      // Error Actions
+      clearError: () =>
+        set((state) => ({
+          ui: { ...state.ui, error: null },
+        })),
 
-    setOrbInteractionMode: (interactionMode: OrbState['interactionMode']) =>
-      set((state) => ({
-        orb: { ...state.orb, interactionMode },
-      })),
+      retryLastAction: () => {
+        const state = get();
+        const currentError = state.ui.error;
+        if (currentError && currentError.retryAction) {
+          set((state) => ({
+            ui: {
+              ...state.ui,
+              error: {
+                ...currentError,
+                retryCount: currentError.retryCount + 1,
+              },
+            },
+          }));
+          currentError.retryAction();
+        }
+      },
 
-    setOrbAnimationSpeed: (animationSpeed: number) =>
-      set((state) => ({
-        orb: { ...state.orb, animationSpeed },
-      })),
+      resetErrorState: () =>
+        set((state) => ({
+          ui: { ...state.ui, error: null },
+        })),
 
-    // Session Actions
-    updateContext: (context: Record<string, unknown>) =>
-      set((state) => ({
-        session: {
-          ...state.session,
-          context: { ...state.session.context, ...context },
-          lastActive: Date.now(),
-        },
-      })),
+      // Orb Actions
+      setOrbAnimationState: (animationState: OrbState['animationState']) =>
+        set((state) => ({
+          orb: { ...state.orb, animationState },
+        })),
 
-    clearContext: () =>
-      set((state) => ({
-        session: {
-          ...state.session,
-          context: {},
-          lastActive: Date.now(),
-        },
-      })),
+      setOrbInteractionMode: (interactionMode: OrbState['interactionMode']) =>
+        set((state) => ({
+          orb: { ...state.orb, interactionMode },
+        })),
 
-    setSessionActive: (isActive: boolean) =>
-      set((state) => ({
-        session: {
-          ...state.session,
-          isActive,
-          lastActive: Date.now(),
-        },
-      })),
+      setOrbAnimationSpeed: (animationSpeed: number) =>
+        set((state) => ({
+          orb: { ...state.orb, animationSpeed },
+        })),
 
-    updateSessionMetadata: (metadata: Record<string, unknown>) =>
-      set((state) => ({
-        session: {
-          ...state.session,
-          metadata: { ...state.session.metadata, ...metadata },
-        },
-      })),
-  };
+      // Session Actions
+      updateContext: (context: Record<string, unknown>) =>
+        set((state) => ({
+          session: {
+            ...state.session,
+            context: { ...state.session.context, ...context },
+            lastActive: Date.now(),
+          },
+        })),
 
-  return store;
-});
+      clearContext: () =>
+        set((state) => ({
+          session: {
+            ...state.session,
+            context: {},
+            lastActive: Date.now(),
+          },
+        })),
+
+      setSessionActive: (isActive: boolean) =>
+        set((state) => ({
+          session: {
+            ...state.session,
+            isActive,
+            lastActive: Date.now(),
+          },
+        })),
+
+      updateSessionMetadata: (metadata: Record<string, unknown>) =>
+        set((state) => ({
+          session: {
+            ...state.session,
+            metadata: { ...state.session.metadata, ...metadata },
+          },
+        })),
+    };
+
+    return store;
+  }) as StateCreator<Store, [], [["zustand/devtools", never]]>
+);
 
 export const useStore = create<Store>()(
-  devtools(createStore, { name: 'Zaila Store' })
+  devtools(
+    createStore,
+    {
+      name: 'ZailaStore',
+      enabled: process.env.NODE_ENV === 'development'
+    }
+  )
 );

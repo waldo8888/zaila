@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import { MicrophoneIcon, PaperAirplaneIcon } from '@heroicons/react/24/outline'
 import Tooltip from './Tooltip'
 import { useAccessibility } from '../providers/AccessibilityProvider'
+import { useUIState, useUIActions, useSessionActions } from '@/store/hooks'
 
 interface InputAreaProps {
   className?: string
@@ -20,38 +21,50 @@ export default function InputArea({
   voiceInputAction
 }: InputAreaProps) {
   const [input, setInput] = useState('')
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const { isLoading } = useUIState()
+  const { setError } = useUIActions()
+  const { updateContext } = useSessionActions()
   const inputRef = useRef<HTMLInputElement>(null)
   const { announce } = useAccessibility()
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!input.trim() || isSubmitting) return
+    if (!input.trim() || isLoading) return
     
     try {
-      setIsSubmitting(true)
+      updateContext({ lastInput: input.trim() })
       announce('Sending message...', 'polite')
       await submitAction(input.trim())
       setInput('')
       announce('Message sent successfully', 'polite')
     } catch (error) {
       console.error('Error submitting message:', error)
+      setError({
+        type: 'client',
+        message: 'Failed to send message',
+        context: { error: error instanceof Error ? error.message : String(error) }
+      })
       announce('Error sending message', 'assertive')
-    } finally {
-      setIsSubmitting(false)
     }
-  }, [input, isSubmitting, submitAction, announce])
+  }, [input, isLoading, submitAction, announce, setError, updateContext])
 
   const handleVoiceInput = useCallback(async () => {
+    if (isLoading) return
+
     try {
       announce('Starting voice input...', 'polite')
       await voiceInputAction()
       announce('Voice input activated', 'polite')
     } catch (error) {
       console.error('Error activating voice input:', error)
+      setError({
+        type: 'client',
+        message: 'Failed to activate voice input',
+        context: { error: error instanceof Error ? error.message : String(error) }
+      })
       announce('Error activating voice input', 'assertive')
     }
-  }, [voiceInputAction, announce])
+  }, [voiceInputAction, announce, isLoading, setError])
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     // Cmd/Ctrl + Enter to submit
@@ -102,7 +115,7 @@ export default function InputArea({
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
-            disabled={isSubmitting}
+            disabled={isLoading}
             className="
               flex-1
               bg-transparent
@@ -120,7 +133,7 @@ export default function InputArea({
           <Tooltip content="Send message (Cmd/Ctrl + Enter)">
             <motion.button
               type="submit"
-              disabled={!input.trim() || isSubmitting}
+              disabled={!input.trim() || isLoading}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               className="
@@ -144,7 +157,7 @@ export default function InputArea({
             <motion.button
               type="button"
               onClick={handleVoiceInput}
-              disabled={isSubmitting}
+              disabled={isLoading}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               className="
