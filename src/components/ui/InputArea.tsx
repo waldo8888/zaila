@@ -67,7 +67,11 @@ export default function InputArea({
 
   return (
     <div 
-      className={`relative ${className}`}
+      className={`
+        relative
+        max-w-2xl mx-auto
+        ${className}
+      `}
       role="search"
       aria-label="Message input"
     >
@@ -77,15 +81,19 @@ export default function InputArea({
         transition={{ duration: 0.4 }}
         className="
           flex items-center gap-2
-          bg-white/10 backdrop-blur-lg
-          rounded-xl p-2
+          bg-gradient-to-b from-white/10 to-white/5
+          backdrop-blur-lg
+          rounded-2xl
+          p-3 sm:p-4
           shadow-lg
+          ring-1 ring-white/10
           focus-within:ring-2 focus-within:ring-white/20
+          transition-all duration-200
         "
       >
         <form 
           onSubmit={handleSubmit} 
-          className="flex-1 flex items-center gap-2"
+          className="flex-1 flex items-center gap-3"
         >
           <input
             ref={inputRef}
@@ -98,65 +106,78 @@ export default function InputArea({
             className="
               flex-1
               bg-transparent
-              text-white
-              placeholder-white/50
-              px-4 py-2
-              rounded-lg
-              focus:outline-none
-              focus:ring-2 focus:ring-white/20
+              text-white placeholder-white/50
+              text-lg
+              py-2 px-3
+              rounded-xl
+              outline-none
               disabled:opacity-50
-              disabled:cursor-not-allowed
+              transition-opacity duration-200
             "
-            aria-label="Message input"
-            aria-disabled={isSubmitting}
-            aria-describedby="input-help"
+            aria-label="Message input field"
           />
 
-          <span id="input-help" className="sr-only">
-            Type your message and press enter to send. Use slash key to focus this input.
-          </span>
+          <Tooltip content="Send message (Cmd/Ctrl + Enter)">
+            <motion.button
+              type="submit"
+              disabled={!input.trim() || isSubmitting}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="
+                p-3
+                rounded-xl
+                bg-white/10
+                hover:bg-white/20
+                disabled:opacity-50
+                disabled:hover:bg-white/10
+                transition-colors duration-200
+              "
+              aria-label="Send message"
+            >
+              <PaperAirplaneIcon className="w-6 h-6 text-white" />
+            </motion.button>
+          </Tooltip>
+        </form>
 
-          <Tooltip content="Use voice input (⌘V)" position="top">
-            <button
+        <div className="flex-shrink-0 pl-2 border-l border-white/10">
+          <Tooltip content="Voice input">
+            <motion.button
               type="button"
               onClick={handleVoiceInput}
               disabled={isSubmitting}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               className="
-                p-2 rounded-lg
-                hover:bg-white/10
-                transition-colors
-                focus:outline-none
-                focus:ring-2 focus:ring-white/20
+                p-3
+                rounded-xl
+                bg-white/10
+                hover:bg-white/20
                 disabled:opacity-50
-                disabled:cursor-not-allowed
+                disabled:hover:bg-white/10
+                transition-colors duration-200
               "
-              aria-label="Use voice input"
-              aria-disabled={isSubmitting}
+              aria-label="Activate voice input"
             >
               <MicrophoneIcon className="w-6 h-6 text-white" />
-            </button>
+            </motion.button>
           </Tooltip>
+        </div>
+      </motion.div>
 
-          <Tooltip content="Send message (⌘↵)" position="top">
-            <button
-              type="submit"
-              disabled={!input.trim() || isSubmitting}
-              className="
-                p-2 rounded-lg
-                hover:bg-white/10
-                transition-colors
-                focus:outline-none
-                focus:ring-2 focus:ring-white/20
-                disabled:opacity-50
-                disabled:cursor-not-allowed
-              "
-              aria-label="Send message"
-              aria-disabled={!input.trim() || isSubmitting}
-            >
-              <PaperAirplaneIcon className="w-6 h-6 text-white" />
-            </button>
-          </Tooltip>
-        </form>
+      {/* Keyboard shortcut hint */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.5 }}
+        className="
+          absolute -bottom-8
+          left-1/2 transform -translate-x-1/2
+          text-sm text-white/40
+          pointer-events-none
+          select-none
+        "
+      >
+        Press <kbd className="px-1.5 py-0.5 rounded bg-white/10 text-white/60">Tab</kbd> to navigate
       </motion.div>
     </div>
   )
