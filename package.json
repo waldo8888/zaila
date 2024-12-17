@@ -23,7 +23,11 @@
     "framer-motion": "10.16.16",
     "@floating-ui/react": "0.26.4",
     "react-aria": "3.30.0",
-    "zustand-persist": "0.4.0"
+    "zustand-persist": "0.4.0",
+    "class-variance-authority": "0.7.0",
+    "clsx": "2.0.0",
+    "tailwind-merge": "2.2.0",
+    "lucide-react": "0.303.0"
   },
   "devDependencies": {
     "typescript": "5.3.3",

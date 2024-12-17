@@ -1,41 +1,63 @@
+'use client';
+
 import React from 'react';
+import { HeadingLevelProvider } from '@/utils/headings';
 import SkipLink from '../common/SkipLink';
 
 interface LayoutProps {
   children: React.ReactNode;
+  navigation?: React.ReactNode;
+  sidebar?: React.ReactNode;
 }
 
-export default function Layout({ children }: LayoutProps) {
+export function Layout({ children, navigation, sidebar }: LayoutProps) {
   return (
-    <>
-      <SkipLink targetId="main-content" />
-      
-      <div className="min-h-screen bg-gray-900">
-        <header
-          role="banner"
-          className="fixed top-0 left-0 right-0 z-40 bg-gray-800/80 backdrop-blur-lg"
-        >
-          {/* Header content */}
-        </header>
+    <HeadingLevelProvider>
+      <div className="min-h-screen flex flex-col">
+        <SkipLink targetId="main-content" />
+        
+        {navigation && (
+          <nav
+            role="navigation"
+            aria-label="Main navigation"
+            className="bg-white shadow-sm"
+          >
+            {navigation}
+          </nav>
+        )}
 
-        <main
-          id="main-content"
-          role="main"
-          tabIndex={-1}
-          className="pt-16 focus:outline-none"
-          // Add a subtle focus style that doesn't interfere with content
-          style={{ outline: 'none' }}
-        >
-          {children}
-        </main>
+        <div className="flex-1 flex">
+          {sidebar && (
+            <aside
+              role="complementary"
+              aria-label="Sidebar"
+              className="w-64 bg-gray-50 border-r"
+            >
+              {sidebar}
+            </aside>
+          )}
+
+          <main
+            id="main-content"
+            role="main"
+            className="flex-1 p-6"
+            tabIndex={-1}
+          >
+            {children}
+          </main>
+        </div>
 
         <footer
           role="contentinfo"
-          className="bg-gray-800 text-white py-8"
+          className="bg-gray-100 py-4 px-6 border-t"
         >
-          {/* Footer content */}
+          <div className="max-w-7xl mx-auto">
+            <p className="text-sm text-gray-600">
+              &copy; {new Date().getFullYear()} Zaila. All rights reserved.
+            </p>
+          </div>
         </footer>
       </div>
-    </>
+    </HeadingLevelProvider>
   );
 }
