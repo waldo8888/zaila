@@ -31,22 +31,25 @@ export default function InputArea({
     try {
       setIsSubmitting(true)
       announce('Sending message...', 'polite')
-      await submitAction(input)
+      await submitAction(input.trim())
       setInput('')
       announce('Message sent successfully', 'polite')
     } catch (error) {
-      announce('Failed to send message. Please try again.', 'assertive')
+      console.error('Error submitting message:', error)
+      announce('Error sending message', 'assertive')
     } finally {
       setIsSubmitting(false)
     }
-  }, [input, submitAction, isSubmitting, announce])
+  }, [input, isSubmitting, submitAction, announce])
 
   const handleVoiceInput = useCallback(async () => {
     try {
       announce('Starting voice input...', 'polite')
       await voiceInputAction()
+      announce('Voice input activated', 'polite')
     } catch (error) {
-      announce('Failed to start voice input. Please try again.', 'assertive')
+      console.error('Error activating voice input:', error)
+      announce('Error activating voice input', 'assertive')
     }
   }, [voiceInputAction, announce])
 

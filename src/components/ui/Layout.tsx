@@ -53,36 +53,29 @@ export default function Layout({ children, className = "" }: LayoutProps) {
         Skip to main content
       </a>
 
-      {/* Header region */}
-      <header
-        role="banner"
-        className="relative z-10"
-        aria-label="Site header"
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <h1 className="sr-only">Zaila</h1>
-        </div>
-      </header>
-
-      {/* Main content */}
-      <motion.main
-        id="main-content"
-        role="main"
-        aria-label="Main content"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.4 }}
+      {/* Main container with responsive grid */}
+      <div 
         className={`
-          flex-1
-          relative z-0
+          flex-1 container mx-auto px-4 sm:px-6 lg:px-8
+          grid grid-cols-1 gap-8
+          max-w-7xl w-full
           ${className}
         `}
-        tabIndex={-1}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Content wrapper with proper spacing */}
+        <div 
+          id="main-content"
+          className="
+            relative
+            flex flex-col items-center justify-center
+            min-h-[calc(100vh-4rem)]
+            py-8 sm:py-12 md:py-16
+            space-y-8 sm:space-y-12
+          "
+        >
           {children}
         </div>
-      </motion.main>
+      </div>
 
       {/* Status region for announcements */}
       <div
@@ -90,22 +83,8 @@ export default function Layout({ children, className = "" }: LayoutProps) {
         aria-live="polite"
         className="sr-only"
       >
-        {/* Dynamic announcements will be inserted here */}
+        {/* Accessibility announcements will be injected here */}
       </div>
-
-      {/* Navigation region for keyboard shortcuts */}
-      <nav
-        role="navigation"
-        aria-label="Keyboard shortcuts"
-        className="sr-only"
-      >
-        <ul>
-          <li>Press slash (/) to focus the input field</li>
-          <li>Press question mark (?) for help</li>
-          <li>Press tab to navigate between interactive elements</li>
-          <li>Press enter or space to activate buttons</li>
-        </ul>
-      </nav>
     </div>
   )
 }

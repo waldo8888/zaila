@@ -19,28 +19,32 @@ export default function Home() {
   }, [])
 
   return (
-    <main className="relative">
+    <main className="relative w-full min-h-screen">
       {/* 3D Scene Background */}
-      <SceneContainer className="z-0" />
+      <SceneContainer className="fixed inset-0 z-0" />
 
       {/* Main Content */}
       <Layout>
-        <div className="relative z-10 space-y-12">
+        <div className="
+          relative z-10 
+          w-full max-w-2xl mx-auto
+          flex flex-col items-center
+          space-y-8 sm:space-y-12
+        ">
           {/* Welcome Message */}
           <WelcomeMessage />
 
           {/* Input Area */}
-          <div className="w-full max-w-3xl mx-auto px-4">
-            <InputArea
-              submitAction={handleSubmitAction}
-              voiceInputAction={handleVoiceInputAction}
-            />
-          </div>
+          <InputArea
+            submitAction={handleSubmitAction}
+            voiceInputAction={handleVoiceInputAction}
+            className="w-full"
+          />
+
+          {/* Status Indicator */}
+          <StatusIndicator className="absolute bottom-4 left-1/2 transform -translate-x-1/2" />
         </div>
       </Layout>
-
-      {/* Status Indicators */}
-      <StatusIndicator />
     </main>
   )
 }
