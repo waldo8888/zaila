@@ -6,13 +6,16 @@ const DEFAULT_UI_STATE: UIState = {
   isLoading: false,
   error: null,
   success: false,
+  trackHistory: true,
+  history: [],
+  historyIndex: -1
 };
 
 export interface UISlice {
   ui: UIState;
   setLoading: (isLoading: boolean) => void;
   setError: (error: ErrorState | null) => void;
-  setSuccess: (success: boolean) => void;
+  setSuccess: (success: boolean | string) => void;
   clearError: () => void;
 }
 
@@ -36,12 +39,11 @@ export const createUISlice: StateCreator<RootState, [], [], UISlice> = (set) => 
       },
     })),
 
-  setSuccess: (success: boolean) =>
+  setSuccess: (success: boolean | string) =>
     set((state: RootState) => ({
       ui: {
         ...state.ui,
         success,
-        error: null,
       },
     })),
 

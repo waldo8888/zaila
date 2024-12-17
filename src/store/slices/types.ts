@@ -14,6 +14,8 @@ export interface ErrorState {
   recoverable: boolean;
   retryAction?: () => void;
   timestamp: number;
+  retryCount: number;
+  clearAction?: () => void;
 }
 
 export interface UIState {

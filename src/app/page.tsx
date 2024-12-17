@@ -23,7 +23,7 @@ export default function Home() {
     } catch (error) {
       console.error('Error submitting message:', error)
       setError({
-        type: 'client',
+        type: 'system',
         message: 'Message handling not yet implemented',
         timestamp: Date.now(),
         context: { error: error instanceof Error ? error.message : String(error) },
@@ -48,7 +48,7 @@ export default function Home() {
     } catch (error) {
       console.error('Error activating voice input:', error)
       setError({
-        type: 'client',
+        type: 'system',
         message: 'Voice input not yet implemented',
         timestamp: Date.now(),
         context: { error: error instanceof Error ? error.message : String(error) },
