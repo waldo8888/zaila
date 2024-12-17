@@ -1,5 +1,5 @@
 import { useStore } from './index';
-import type { StoreState } from './types';
+import type { StoreState, OrbState } from './types';
 
 // Type-safe selector hooks for UI state
 export const useUIState = () => useStore((state) => state.ui);
@@ -23,14 +23,27 @@ export const useUIActions = () => ({
   setLoading: useStore((state) => state.setLoading),
   setError: useStore((state) => state.setError),
   setSuccess: useStore((state) => state.setSuccess),
+  clearError: useStore((state) => state.clearError),
+  retryLastAction: useStore((state) => state.retryLastAction),
+  resetErrorState: useStore((state) => state.resetErrorState),
 });
 
-export const useOrbActions = () => ({
-  setAnimationState: useStore((state) => state.setOrbAnimationState),
-  setInteractionMode: useStore((state) => state.setOrbInteractionMode),
-});
+export const useOrbActions = () => {
+  const store = useStore();
+  return {
+    setAnimationState: (state: OrbState['animationState']) => 
+      store.setOrbAnimationState(state),
+    setInteractionMode: (mode: OrbState['interactionMode']) =>
+      store.setOrbInteractionMode(mode),
+  };
+};
 
-export const useSessionActions = () => ({
-  updateContext: useStore((state) => state.updateContext),
-  clearContext: useStore((state) => state.clearContext),
-});
+export const useSessionActions = () => {
+  const store = useStore();
+  return {
+    updateContext: store.updateContext,
+    clearContext: store.clearContext,
+    setSessionActive: store.setSessionActive,
+    updateSessionMetadata: store.updateSessionMetadata,
+  };
+};

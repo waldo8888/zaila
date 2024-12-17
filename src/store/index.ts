@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import { type Store, type StoreState, type ErrorState } from './types';
+import { type Store, type StoreState, type ErrorState, type SessionState } from './types';
 import { errorMiddleware } from './middleware/error';
 
 const initialState: StoreState = {
@@ -22,6 +22,13 @@ const initialState: StoreState = {
   },
   session: {
     context: {},
+    lastActive: null,
+    isActive: false,
+    metadata: {
+      version: 1,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    },
   },
 };
 
@@ -110,18 +117,45 @@ const createStore = errorMiddleware<Store>((set, get) => {
     // Session Actions
     updateContext: (context: Record<string, unknown>) =>
       set((state) => ({
-        session: { ...state.session, context: { ...state.session.context, ...context } },
+        session: {
+          ...state.session,
+          context: { ...state.session.context, ...context },
+          lastActive: Date.now(),
+        },
       })),
 
     clearContext: () =>
       set((state) => ({
-        session: { ...state.session, context: {} },
+        session: {
+          ...state.session,
+          context: {},
+          lastActive: Date.now(),
+        },
+      })),
+
+    setSessionActive: (isActive: boolean) =>
+      set((state) => ({
+        session: {
+          ...state.session,
+          isActive,
+          lastActive: Date.now(),
+        },
+      })),
+
+    updateSessionMetadata: (metadata: Partial<SessionState['metadata']>) =>
+      set((state) => ({
+        session: {
+          ...state.session,
+          metadata: {
+            ...state.session.metadata,
+            ...metadata,
+            updatedAt: Date.now(),
+          },
+        },
       })),
   };
 
   return store;
 });
 
-export const useStore = create<Store>()(
-  devtools(createStore, { name: 'ZailaStore' })
-);
+export const useStore = create(devtools(createStore));
