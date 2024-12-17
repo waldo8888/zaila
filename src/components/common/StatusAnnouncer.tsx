@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { useAccessibility } from '../providers/AccessibilityProvider';
 import LiveRegion from './LiveRegion';

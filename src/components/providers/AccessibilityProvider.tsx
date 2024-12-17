@@ -1,3 +1,5 @@
+'use client';
+
 import React, { createContext, useContext, useCallback, useRef, useState } from 'react';
 import { create } from 'zustand';
 import { motion, AnimatePresence } from 'framer-motion';

@@ -1,3 +1,5 @@
+'use client';
+
 import { useCallback } from 'react';
 import { useAccessibility } from '../components/providers/AccessibilityProvider';
 
