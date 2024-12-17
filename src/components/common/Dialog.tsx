@@ -1,7 +1,8 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useRef } from 'react';
 import { withAria } from '@/components/hoc/withAria';
 import { useAriaAnnounce } from '@/utils/aria';
 import { useAccessibility } from '@/components/providers/AccessibilityProvider';
+import FocusTrap from './FocusTrap';
 
 interface DialogProps {
   isOpen: boolean;
@@ -22,55 +23,48 @@ const Dialog = React.forwardRef<HTMLDivElement, DialogProps>(({
   const { announceRef, announceMessage } = useAriaAnnounce();
   const dialogRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (isOpen) {
       announceMessage(`Dialog opened: ${title}`);
-      dialogRef.current?.focus();
     }
   }, [isOpen, title, announceMessage]);
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') {
-      onClose();
-    }
-  };
 
   if (!isOpen) return null;
 
   return (
-    <div
-      ref={ref}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="dialog-title"
-      aria-describedby={description ? "dialog-description" : undefined}
-      onKeyDown={handleKeyDown}
-      tabIndex={-1}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-    >
+    <FocusTrap isActive={isOpen} onEscape={onClose}>
       <div
-        ref={dialogRef}
-        className="w-full max-w-md rounded-lg bg-gray-800 p-6 shadow-xl"
+        ref={ref}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="dialog-title"
+        aria-describedby={description ? "dialog-description" : undefined}
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
       >
-        <h2 id="dialog-title" className="text-xl font-bold text-white">
-          {title}
-        </h2>
-        {description && (
-          <p id="dialog-description" className="mt-2 text-gray-300">
-            {description}
-          </p>
-        )}
-        <div className="mt-4">{children}</div>
-        <button
-          onClick={onClose}
-          aria-label="Close dialog"
-          className="absolute right-4 top-4 text-gray-400 hover:text-white"
+        <div
+          ref={dialogRef}
+          className="w-full max-w-md rounded-lg bg-gray-800 p-6 shadow-xl"
         >
-          ×
-        </button>
+          <h2 id="dialog-title" className="text-xl font-bold text-white">
+            {title}
+          </h2>
+          {description && (
+            <p id="dialog-description" className="mt-2 text-gray-300">
+              {description}
+            </p>
+          )}
+          <div className="mt-4">{children}</div>
+          <button
+            onClick={onClose}
+            aria-label="Close dialog"
+            className="absolute right-4 top-4 text-gray-400 hover:text-white"
+          >
+            ×
+          </button>
+        </div>
+        <div ref={announceRef} className="sr-only" />
       </div>
-      <div ref={announceRef} className="sr-only" />
-    </div>
+    </FocusTrap>
   );
 });
 
