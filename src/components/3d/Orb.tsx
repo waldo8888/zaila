@@ -13,6 +13,11 @@ const vertexShader = `
   uniform float uSpeed;
   uniform float uNoiseStrength;
   uniform float uNoiseFrequency;
+  uniform float uAlpha;
+
+  attribute vec3 color;
+  attribute float size;
+  attribute float angle;
 
   varying vec3 vPosition;
   varying vec3 vColor;
@@ -22,42 +27,48 @@ const vertexShader = `
       vColor = color;
 
       vec3 pos = position;
-      float angle = uTime * uSpeed;
+      float angleOffset = uTime * uSpeed + angle;
 
       // Rotate around Y axis
-      pos.x = position.x * cos(angle) - position.z * sin(angle);
-      pos.z = position.x * sin(angle) + position.z * cos(angle);
+      pos.x = position.x * cos(angleOffset) - position.z * sin(angleOffset);
+      pos.z = position.x * sin(angleOffset) + position.z * cos(angleOffset);
 
       // Add some noise movement
-      float noiseFreq = uNoiseFrequency;
-      float noiseAmp = uNoiseStrength;
-      pos.x += sin(uTime * 2.0 + position.y * noiseFreq) * noiseAmp;
-      pos.y += cos(uTime * 2.0 + position.x * noiseFreq) * noiseAmp;
-      pos.z += sin(uTime * 2.0 + position.z * noiseFreq) * noiseAmp;
+      float noise = sin(angleOffset + pos.x * uNoiseFrequency) * 
+                   cos(angleOffset + pos.z * uNoiseFrequency) * 
+                   uNoiseStrength;
+      
+      pos += normalize(pos) * noise;
 
-      vec4 mvPosition = modelViewMatrix * vec4(pos * uRadius, 1.0);
+      // Scale by radius
+      pos *= uRadius;
+
+      vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
       gl_Position = projectionMatrix * mvPosition;
 
       // Size attenuation
-      gl_PointSize = 2.5 * (1.0 - length(mvPosition.xyz) * 0.1);
+      gl_PointSize = size * (300.0 / -mvPosition.z);
   }
 `
 
 // Fragment Shader
 const fragmentShader = `
-  varying vec3 vPosition;
+  uniform float uAlpha;
+
   varying vec3 vColor;
+  varying vec3 vPosition;
 
   void main() {
-      vec2 center = gl_PointCoord - vec2(0.5);
+      // Create a circular point
+      vec2 center = gl_PointCoord - 0.5;
       float dist = length(center);
-      
-      float alpha = 1.0 - smoothstep(0.4, 0.5, dist);
-      
-      vec3 color = vColor;
-      color += pow(1.0 - dist, 3.0) * 0.6;
-      
-      gl_FragColor = vec4(color, alpha);
+      if (dist > 0.5) discard;
+
+      // Smooth edges
+      float alpha = smoothstep(0.5, 0.4, dist) * uAlpha;
+
+      // Output final color
+      gl_FragColor = vec4(vColor, alpha);
   }
 `
 
@@ -74,7 +85,8 @@ const getStateConfig = (state: OrbState['animationState']) => {
         speed: 0.8,
         noiseStrength: 0.04,
         noiseFrequency: 6.0,
-        radius: 1.1
+        radius: 1.1,
+        alpha: 1.0
       }
     case 'success':
       return {
@@ -83,7 +95,8 @@ const getStateConfig = (state: OrbState['animationState']) => {
         speed: 0.4,
         noiseStrength: 0.02,
         noiseFrequency: 4.0,
-        radius: 1.2
+        radius: 1.2,
+        alpha: 1.0
       }
     case 'error':
       return {
@@ -92,7 +105,8 @@ const getStateConfig = (state: OrbState['animationState']) => {
         speed: 1.2,
         noiseStrength: 0.06,
         noiseFrequency: 8.0,
-        radius: 0.9
+        radius: 0.9,
+        alpha: 1.0
       }
     default:
       return {
@@ -101,88 +115,101 @@ const getStateConfig = (state: OrbState['animationState']) => {
         speed: 0.3,
         noiseStrength: 0.02,
         noiseFrequency: 4.0,
-        radius: 1.0
+        radius: 1.0,
+        alpha: 1.0
       }
   }
 }
 
-const Orb = ({ state = 'idle' }: OrbProps) => {
+export default function Orb({ state = 'idle' }: OrbProps) {
   const pointsRef = useRef<Points>(null)
   const materialRef = useRef<ShaderMaterial>(null)
-  const timeRef = useRef(0)
-  const { animationSpeed } = useOrbState()
+  const { animationState } = useOrbState()
 
-  const config = getStateConfig(state)
+  // Get configuration based on state
+  const config = useMemo(() => getStateConfig(state || animationState), [state, animationState])
 
-  // Generate particles in a spherical distribution
+  // Create geometry with particles
   const geometry = useMemo(() => {
     const geo = new BufferGeometry()
-    const particles = 12000
     const positions = []
     const colors = []
-    const baseColor = new Color(config.baseColor)
-    const emissiveColor = new Color(config.emissiveColor)
-    
-    for (let i = 0; i < particles; i++) {
+    const sizes = []
+    const angles = []
+
+    const particleCount = 5000
+    const radius = 1.5
+    const colorPalette = [
+      new Color('#ffffff'),
+      new Color('#8ab4f8'),
+      new Color('#c2e7ff'),
+      new Color('#1a73e8')
+    ]
+
+    for (let i = 0; i < particleCount; i++) {
+      // Position on sphere surface
       const theta = Math.random() * Math.PI * 2
-      const phi = Math.acos(2 * Math.random() - 1)
-      const radius = Math.pow(Math.random(), 0.5) // Adjusted distribution
-      
-      const x = radius * Math.sin(phi) * Math.cos(theta)
-      const y = radius * Math.sin(phi) * Math.sin(theta)
-      const z = radius * Math.cos(phi)
-      
-      positions.push(x, y, z)
-      
-      const mixRatio = radius
-      const particleColor = baseColor.clone().lerp(emissiveColor, mixRatio)
-      colors.push(particleColor.r, particleColor.g, particleColor.b)
+      const phi = Math.acos(Math.random() * 2 - 1)
+      const r = radius * (0.9 + Math.random() * 0.2) // Vary radius slightly
+
+      positions.push(
+        r * Math.sin(phi) * Math.cos(theta),
+        r * Math.sin(phi) * Math.sin(theta),
+        r * Math.cos(phi)
+      )
+
+      // Random color from palette
+      const color = colorPalette[Math.floor(Math.random() * colorPalette.length)]
+      colors.push(color.r, color.g, color.b)
+
+      // Random size
+      sizes.push(0.02 + Math.random() * 0.03)
+
+      // Random initial angle
+      angles.push(Math.random() * Math.PI * 2)
     }
-    
+
     geo.setAttribute('position', new Float32BufferAttribute(positions, 3))
     geo.setAttribute('color', new Float32BufferAttribute(colors, 3))
+    geo.setAttribute('size', new Float32BufferAttribute(sizes, 1))
+    geo.setAttribute('angle', new Float32BufferAttribute(angles, 1))
+
     return geo
-  }, [config.baseColor, config.emissiveColor])
+  }, [])
 
-  // Create shader material
-  const material = useMemo(() => {
-    return new ShaderMaterial({
-      vertexShader,
-      fragmentShader,
-      transparent: true,
-      uniforms: {
-        uTime: { value: 0 },
-        uRadius: { value: config.radius },
-        uSpeed: { value: config.speed },
-        uNoiseStrength: { value: config.noiseStrength },
-        uNoiseFrequency: { value: config.noiseFrequency }
-      },
-      vertexColors: true,
-      depthWrite: false,
-    })
-  }, [config])
-
-  // Animation loop
-  useFrame((_, delta) => {
-    timeRef.current += delta * animationSpeed
-
-    if (materialRef.current) {
-      materialRef.current.uniforms.uTime.value = timeRef.current
-      materialRef.current.uniforms.uSpeed.value = config.speed * animationSpeed
-      materialRef.current.uniforms.uNoiseStrength.value = config.noiseStrength
-      materialRef.current.uniforms.uNoiseFrequency.value = config.noiseFrequency
+  // Animation
+  useFrame((state, delta) => {
+    if (pointsRef.current && materialRef.current) {
+      // Update uniforms
+      materialRef.current.uniforms.uTime.value += delta * config.speed
       
-      // Breathing effect
-      const breathe = Math.sin(timeRef.current) * 0.1 + config.radius
-      materialRef.current.uniforms.uRadius.value = breathe
+      // Gentle floating motion
+      const time = state.clock.getElapsedTime()
+      pointsRef.current.position.y = Math.sin(time * 0.5) * 0.1
+      
+      // Smooth rotation
+      pointsRef.current.rotation.y += delta * 0.1
     }
   })
 
   return (
     <points ref={pointsRef} geometry={geometry}>
-      <primitive object={material} ref={materialRef} attach="material" />
+      <shaderMaterial
+        ref={materialRef}
+        vertexShader={vertexShader}
+        fragmentShader={fragmentShader}
+        transparent
+        depthWrite={false}
+        blending={1}
+        uniforms={{
+          uTime: { value: 0 },
+          uRadius: { value: config.radius },
+          uSpeed: { value: config.speed },
+          uNoiseStrength: { value: config.noiseStrength },
+          uNoiseFrequency: { value: config.noiseFrequency },
+          uAlpha: { value: config.alpha }
+        }}
+      />
     </points>
   )
 }
-
-export default Orb

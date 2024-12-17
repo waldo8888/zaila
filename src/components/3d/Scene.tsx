@@ -29,13 +29,11 @@ export default function Scene() {
               background={false}
               blur={0.5}
             />
-          </Suspense>
-          <MemoizedLights />
-          <Suspense fallback={null}>
+            <MemoizedLights />
             <OrbWithState />
           </Suspense>
         </Canvas>
       </OrbStateManager>
     </div>
-  );
+  )
 }

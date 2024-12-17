@@ -38,23 +38,19 @@ export default function SceneContainer({ className = '' }: SceneContainerProps) 
   }, [])
 
   return (
-    <div
+    <div 
       ref={containerRef}
       className={`
-        fixed inset-0
+        absolute w-full h-full
         overflow-hidden
-        bg-gradient-to-b from-gray-900 to-gray-800
+        bg-gradient-to-b from-[#000815] to-[#001830]
         ${className}
       `}
-      style={{
-        // Ensure container maintains aspect ratio
-        aspectRatio: dimensions.width / dimensions.height,
-      }}
-      aria-hidden="true" // Scene is decorative
+      aria-hidden="true"
     >
-      <div className="absolute inset-0">
+      {dimensions.width > 0 && dimensions.height > 0 && (
         <Scene />
-      </div>
+      )}
     </div>
   )
 }

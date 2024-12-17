@@ -4,37 +4,39 @@ import { Canvas as ThreeCanvas } from '@react-three/fiber'
 import { Preload } from '@react-three/drei'
 import { type PropsWithChildren } from 'react'
 
-interface CanvasProps extends PropsWithChildren {
-  className?: string
+interface CanvasProps {
+  children: React.ReactNode
 }
 
-export const Canvas = ({ children, className = '' }: CanvasProps) => {
+export function Canvas({ children }: CanvasProps) {
   return (
-    <div className={`relative h-full w-full ${className}`}>
-      <ThreeCanvas
-        className="absolute inset-0"
-        shadows
-        dpr={[1, 2]} // Limit pixel ratio for better performance
-        gl={{
-          antialias: true,
-          powerPreference: 'high-performance',
-          alpha: false,
-          stencil: false,
-          depth: true
-        }}
-        camera={{
-          fov: 45,
-          near: 0.1,
-          far: 200,
-          position: [0, 0, 6]
-        }}
-        performance={{
-          min: 0.5 // Allow frame rate to drop to 30 FPS before intervening
-        }}
-      >
-        {children}
-        <Preload all /> {/* Preload all assets */}
-      </ThreeCanvas>
-    </div>
+    <ThreeCanvas
+      camera={{
+        position: [0, 0, 5],
+        fov: 45,
+        near: 0.1,
+        far: 1000
+      }}
+      style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        pointerEvents: 'none'
+      }}
+      gl={{
+        antialias: true,
+        alpha: true,
+        powerPreference: 'high-performance'
+      }}
+      dpr={[1, 2]} // Responsive pixel ratio
+      performance={{
+        min: 0.5 // Allow frame rate to drop to 30fps
+      }}
+    >
+      <Preload all />
+      {children}
+    </ThreeCanvas>
   )
 }
