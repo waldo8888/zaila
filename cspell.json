@@ -1,0 +1,14 @@
+{
+  "version": "0.2",
+  "language": "en",
+  "words": [
+    "Zaila",
+    "drei",
+    "metalness"
+  ],
+  "ignorePaths": [
+    "node_modules/**",
+    ".next/**",
+    "package-lock.json"
+  ]
+}
