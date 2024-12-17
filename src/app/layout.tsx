@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
-import { DebugTools } from './debug-tools'
-import '../styles/globals.css'
+import '@/app/globals.css'
+import { AccessibilityProvider } from '@/components/providers/AccessibilityProvider'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -17,9 +17,18 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="theme-color" content="#000000" />
+        <meta 
+          name="description" 
+          content={metadata.description?.toString() || 'AI-powered operating system for enterprise automation'} 
+        />
+      </head>
       <body className={inter.className}>
-        {children}
-        <DebugTools />
+        <AccessibilityProvider>
+          {children}
+        </AccessibilityProvider>
       </body>
     </html>
   )
