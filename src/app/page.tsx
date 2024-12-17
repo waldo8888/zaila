@@ -2,7 +2,6 @@
 
 import Header from '../components/Header'
 import Scene from '../components/3d/Scene'
-import ControlPanel from '../components/ControlPanel'
 
 export default function Home() {
   return (
@@ -16,9 +15,6 @@ export default function Home() {
             title="Welcome to Zaila"
             subtitle="AI-powered operating system for enterprise automation"
           />
-          <div className="max-w-4xl mx-auto mt-8">
-            <ControlPanel />
-          </div>
         </div>
       </div>
     </main>
