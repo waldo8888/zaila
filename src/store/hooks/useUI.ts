@@ -11,7 +11,7 @@ export const useUI = () => {
       type: ErrorType,
       message: string,
       context?: Record<string, unknown>,
-      recoverable: boolean = true
+      recoverable = true
     ) => {
       store.setError(createErrorState(type, message, context, recoverable));
     },
@@ -50,8 +50,15 @@ export const useUI = () => {
   );
 
   return {
-    ...store.ui,
+    isLoading: store.ui.isLoading,
+    error: store.ui.error,
+    success: store.ui.success,
+    setLoading: store.setLoading,
     setError,
+    setSuccess: store.setSuccess,
+    clearError: store.clearError,
+    retryLastAction: store.retryLastAction,
+    resetErrorState: store.resetErrorState,
     handleAsyncOperation,
   };
 };

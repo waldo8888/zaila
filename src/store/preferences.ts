@@ -1,86 +1,48 @@
 import { StateCreator } from 'zustand';
-import { PreferenceState, StoreState } from './types';
+import { Store } from './types';
 
-const DEFAULT_PREFERENCES: PreferenceState = {
-  theme: 'system',
-  animationsEnabled: true,
-  soundEnabled: true,
-  language: 'en',
-  accessibility: {
-    reducedMotion: false,
-    highContrast: false,
-    fontSize: 'medium'
-  },
-  notifications: {
-    enabled: true,
-    sound: true,
-    desktop: false
-  }
-};
-
-export interface PreferenceSlice {
-  preferences: PreferenceState;
-  setTheme: (theme: PreferenceState['theme']) => void;
-  setAnimationsEnabled: (enabled: boolean) => void;
-  setSoundEnabled: (enabled: boolean) => void;
-  setLanguage: (language: string) => void;
-  setAccessibilityOption: (option: keyof PreferenceState['accessibility'], value: boolean | string) => void;
-  setNotificationOption: (option: keyof PreferenceState['notifications'], value: boolean) => void;
-  resetPreferences: () => void;
+export interface PreferencesState {
+  theme: 'light' | 'dark';
+  fontSize: number;
+  autoSave: boolean;
+  notifications: boolean;
 }
 
-export const createPreferenceSlice: StateCreator<
-  StoreState,
-  [],
-  [],
-  PreferenceSlice
-> = (set) => ({
-  preferences: DEFAULT_PREFERENCES,
+export interface PreferencesSlice {
+  preferences: PreferencesState;
+  setTheme: (theme: PreferencesState['theme']) => void;
+  setFontSize: (size: number) => void;
+  setAutoSave: (enabled: boolean) => void;
+  setNotifications: (enabled: boolean) => void;
+}
 
+const DEFAULT_PREFERENCES: PreferencesState = {
+  theme: 'light',
+  fontSize: 14,
+  autoSave: true,
+  notifications: true,
+};
+
+export const createPreferencesSlice: StateCreator<Store, [], [], PreferencesSlice> = (set) => ({
+  preferences: DEFAULT_PREFERENCES,
+  
   setTheme: (theme) =>
     set((state) => ({
       preferences: { ...state.preferences, theme }
     })),
-
-  setAnimationsEnabled: (enabled) =>
+    
+  setFontSize: (fontSize) =>
     set((state) => ({
-      preferences: { ...state.preferences, animationsEnabled: enabled }
+      preferences: { ...state.preferences, fontSize }
     })),
-
-  setSoundEnabled: (enabled) =>
+    
+  setAutoSave: (autoSave) =>
     set((state) => ({
-      preferences: { ...state.preferences, soundEnabled: enabled }
+      preferences: { ...state.preferences, autoSave }
     })),
-
-  setLanguage: (language) =>
+    
+  setNotifications: (notifications) =>
     set((state) => ({
-      preferences: { ...state.preferences, language }
+      preferences: { ...state.preferences, notifications }
     })),
-
-  setAccessibilityOption: (option, value) =>
-    set((state) => ({
-      preferences: {
-        ...state.preferences,
-        accessibility: {
-          ...state.preferences.accessibility,
-          [option]: value
-        }
-      }
-    })),
-
-  setNotificationOption: (option, value) =>
-    set((state) => ({
-      preferences: {
-        ...state.preferences,
-        notifications: {
-          ...state.preferences.notifications,
-          [option]: value
-        }
-      }
-    })),
-
-  resetPreferences: () =>
-    set(() => ({
-      preferences: DEFAULT_PREFERENCES
-    }))
 });

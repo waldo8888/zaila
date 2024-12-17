@@ -1,172 +1,112 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import { type Store, type StoreState, type ErrorState, type SessionState, type OrbState } from './types';
-import { errorMiddleware } from './middleware/error';
-import { persistMiddleware } from './middleware/persist';
 import { persistenceMiddleware } from './middleware/persistence';
-import { createPreferenceSlice } from './preferences';
+import { errorMiddleware } from './middleware/error';
+import { createPreferencesSlice } from './preferences';
+import { Store, StoreState, ErrorState } from './types';
+import { createErrorState } from './middleware/error';
 
-const initialState: StoreState = {
-  ui: {
-    isLoading: false,
-    error: null,
-    success: false,
-  },
-  orb: {
-    animationState: 'idle',
-    interactionMode: 'passive',
-    animationSpeed: 1.0,
-  },
-  session: {
-    context: {},
-    lastActive: null,
-    isActive: false,
-    metadata: {
-      version: 1,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    },
-  },
-  preferences: {
-    theme: 'system',
-    animationsEnabled: true,
-    soundEnabled: true,
-    language: 'en',
-    accessibility: {
-      reducedMotion: false,
-      highContrast: false,
-      fontSize: 'medium'
-    },
-    notifications: {
-      enabled: true,
-      sound: true,
-      desktop: false
-    }
-  }
+// Default state values
+const defaultUIState: StoreState['ui'] = {
+  isLoading: false,
+  error: null,
+  success: false,
 };
 
-const createStore = persistenceMiddleware(
-  persistMiddleware(
-    errorMiddleware<Store>((set, get) => {
-      const store: Store = {
-        ...initialState,
+const defaultOrbState: StoreState['orb'] = {
+  animationState: 'idle',
+  interactionMode: 'passive',
+  animationSpeed: 1,
+};
 
-        // UI Actions
-        setLoading: (isLoading: boolean) =>
-          set((state) => ({
-            ui: { ...state.ui, isLoading },
-          })),
+const defaultSessionState: StoreState['session'] = {
+  context: {},
+  isActive: false,
+  lastActive: null,
+  metadata: {},
+};
 
-        setError: (error: Partial<ErrorState> | null) =>
-          set((state) => ({
-            ui: {
-              ...state.ui,
-              error: error === null ? null : {
-                type: error.type || 'unknown',
-                message: error.message || 'An unexpected error occurred',
-                timestamp: error.timestamp || Date.now(),
-                context: error.context || {},
-                retryCount: error.retryCount || 0,
-                recoverable: error.recoverable ?? true,
-                retryAction: error.retryAction || (() => {}),
-                clearAction: error.clearAction || (() => {})
-              }
-            },
-          })),
+// Create store with all slices and actions
+const createStore = () => {
+  return create<Store>()(
+    devtools(
+      errorMiddleware(
+        persistenceMiddleware(
+          (...args) => ({
+            ...createPreferencesSlice(...args),
+            
+            // UI slice
+            ui: defaultUIState,
+            setLoading: (isLoading: boolean) =>
+              args[0]((state) => ({ ui: { ...state.ui, isLoading } })),
+            setError: (error: Partial<ErrorState> | null) =>
+              args[0]((state) => ({
+                ui: {
+                  ...state.ui,
+                  error: error === null ? null : {
+                    type: error.type || 'unknown',
+                    message: error.message || 'An unknown error occurred',
+                    timestamp: error.timestamp || Date.now(),
+                    context: error.context || {},
+                    retryCount: error.retryCount || 0,
+                    recoverable: error.recoverable ?? true,
+                    retryAction: error.retryAction || (() => {}),
+                    clearAction: error.clearAction || (() => {}),
+                  }
+                }
+              })),
+            setSuccess: (success: boolean) =>
+              args[0]((state) => ({ ui: { ...state.ui, success } })),
+            
+            // Error handling
+            clearError: () =>
+              args[0]((state) => ({ ui: { ...state.ui, error: null } })),
+            retryLastAction: () =>
+              args[0]((state) => {
+                if (state.ui.error?.retryAction) {
+                  state.ui.error.retryAction();
+                }
+                return state;
+              }),
+            resetErrorState: () =>
+              args[0](() => ({ ui: defaultUIState })),
+            
+            // Orb slice
+            orb: defaultOrbState,
+            setOrbAnimationState: (animationState) =>
+              args[0]((state) => ({ orb: { ...state.orb, animationState } })),
+            setOrbInteractionMode: (interactionMode) =>
+              args[0]((state) => ({ orb: { ...state.orb, interactionMode } })),
+            setOrbAnimationSpeed: (animationSpeed) =>
+              args[0]((state) => ({ orb: { ...state.orb, animationSpeed } })),
+            
+            // Session slice
+            session: defaultSessionState,
+            updateContext: (context) =>
+              args[0]((state) => ({
+                session: { ...state.session, context }
+              })),
+            clearContext: () =>
+              args[0]((state) => ({
+                session: { ...state.session, context: {} }
+              })),
+            setSessionActive: (isActive) =>
+              args[0]((state) => ({
+                session: {
+                  ...state.session,
+                  isActive,
+                  lastActive: isActive ? Date.now() : state.session.lastActive
+                }
+              })),
+            updateSessionMetadata: (metadata) =>
+              args[0]((state) => ({
+                session: { ...state.session, metadata }
+              })),
+          })
+        )
+      )
+    )
+  );
+};
 
-        setSuccess: (success: boolean) =>
-          set((state) => ({
-            ui: { ...state.ui, success },
-          })),
-
-        // Error Actions
-        clearError: () =>
-          set((state) => ({
-            ui: { ...state.ui, error: null },
-          })),
-
-        retryLastAction: () => {
-          const state = get();
-          const currentError = state.ui.error;
-          if (currentError && currentError.retryAction) {
-            set((state) => ({
-              ui: {
-                ...state.ui,
-                error: {
-                  ...currentError,
-                  retryCount: currentError.retryCount + 1,
-                },
-              },
-            }));
-            currentError.retryAction();
-          }
-        },
-
-        resetErrorState: () =>
-          set((state) => ({
-            ui: { ...state.ui, error: null },
-          })),
-
-        // Orb Actions
-        setOrbAnimationState: (animationState: OrbState['animationState']) =>
-          set((state) => ({
-            orb: { ...state.orb, animationState },
-          })),
-
-        setOrbInteractionMode: (interactionMode: OrbState['interactionMode']) =>
-          set((state) => ({
-            orb: { ...state.orb, interactionMode },
-          })),
-
-        setOrbAnimationSpeed: (animationSpeed: number) =>
-          set((state) => ({
-            orb: { ...state.orb, animationSpeed },
-          })),
-
-        // Session Actions
-        updateContext: (context: Record<string, unknown>) =>
-          set((state) => ({
-            session: {
-              ...state.session,
-              context: { ...state.session.context, ...context },
-              lastActive: Date.now(),
-            },
-          })),
-
-        clearContext: () =>
-          set((state) => ({
-            session: {
-              ...state.session,
-              context: {},
-              lastActive: Date.now(),
-            },
-          })),
-
-        setSessionActive: (isActive: boolean) =>
-          set((state) => ({
-            session: {
-              ...state.session,
-              isActive,
-              lastActive: Date.now(),
-            },
-          })),
-
-        updateSessionMetadata: (metadata: Record<string, unknown>) =>
-          set((state) => ({
-            session: {
-              ...state.session,
-              metadata: { ...state.session.metadata, ...metadata },
-            },
-          })),
-        ...createPreferenceSlice(set, get),
-      };
-
-      return store;
-    })
-  )
-);
-
-// Create the store with middleware
-export const useStore = create<Store>()(
-  devtools(createStore) as unknown as StateCreator<Store>
-);
+export const useStore = createStore();

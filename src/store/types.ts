@@ -2,6 +2,8 @@
  * Core state types for the application
  */
 
+import { PreferencesSlice, PreferencesState } from './preferences';
+
 // Error types
 export type ErrorType = 
   | 'network'
@@ -45,30 +47,12 @@ export interface SessionState {
   metadata: Record<string, unknown>;
 }
 
-// Preference State types
-export interface PreferenceState {
-  theme: 'light' | 'dark' | 'system';
-  animationsEnabled: boolean;
-  soundEnabled: boolean;
-  language: string;
-  accessibility: {
-    reducedMotion: boolean;
-    highContrast: boolean;
-    fontSize: 'small' | 'medium' | 'large';
-  };
-  notifications: {
-    enabled: boolean;
-    sound: boolean;
-    desktop: boolean;
-  };
-}
-
 // Combined store state type
 export interface StoreState {
   ui: UIState;
   orb: OrbState;
   session: SessionState;
-  preferences: PreferenceState;
+  preferences: PreferencesState;
 }
 
 // Store actions type
@@ -93,16 +77,7 @@ export interface StoreActions {
   clearContext: () => void;
   setSessionActive: (isActive: boolean) => void;
   updateSessionMetadata: (metadata: Record<string, unknown>) => void;
-  
-  // Preference actions
-  setTheme: (theme: PreferenceState['theme']) => void;
-  setAnimationsEnabled: (enabled: boolean) => void;
-  setSoundEnabled: (enabled: boolean) => void;
-  setLanguage: (language: string) => void;
-  setAccessibilityOption: (option: keyof PreferenceState['accessibility'], value: boolean | string) => void;
-  setNotificationOption: (option: keyof PreferenceState['notifications'], value: boolean) => void;
-  resetPreferences: () => void;
 }
 
 // Combined store type
-export type Store = StoreState & StoreActions;
+export type Store = StoreState & StoreActions & PreferencesSlice;

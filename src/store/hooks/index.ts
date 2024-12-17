@@ -1,4 +1,11 @@
-export { useStoreSelector } from './useStoreSelector';
+import { useStore } from '..';
+import { Store } from '../types';
+
+export const useStoreSelector = <T>(selector: (state: Store) => T): T => {
+  return useStore(selector);
+};
+
+export * from './usePreferences';
+export * from './useOrb';
 export { useUI } from './useUI';
-export { useOrb } from './useOrb';
 export { useSession } from './useSession';
