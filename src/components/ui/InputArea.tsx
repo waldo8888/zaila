@@ -33,10 +33,10 @@ export default function InputArea({
     
     try {
       updateContext({ lastInput: input.trim() })
-      announce('Sending message...', 'polite')
+      announce('Sending message...')
       await submitAction(input.trim())
       setInput('')
-      announce('Message sent successfully', 'polite')
+      announce('Message sent successfully')
     } catch (error) {
       console.error('Error submitting message:', error)
       setError({
@@ -44,7 +44,7 @@ export default function InputArea({
         message: 'Failed to send message',
         context: { error: error instanceof Error ? error.message : String(error) }
       })
-      announce('Error sending message', 'assertive')
+      announce('Error sending message')
     }
   }, [input, isLoading, submitAction, announce, setError, updateContext])
 
@@ -52,9 +52,9 @@ export default function InputArea({
     if (isLoading) return
 
     try {
-      announce('Starting voice input...', 'polite')
+      announce('Starting voice input...')
       await voiceInputAction()
-      announce('Voice input activated', 'polite')
+      announce('Voice input activated')
     } catch (error) {
       console.error('Error activating voice input:', error)
       setError({
@@ -62,7 +62,7 @@ export default function InputArea({
         message: 'Failed to activate voice input',
         context: { error: error instanceof Error ? error.message : String(error) }
       })
-      announce('Error activating voice input', 'assertive')
+      announce('Error activating voice input')
     }
   }, [voiceInputAction, announce, isLoading, setError])
 
@@ -99,14 +99,12 @@ export default function InputArea({
           rounded-2xl
           p-3 sm:p-4
           shadow-lg
-          ring-1 ring-white/10
-          focus-within:ring-2 focus-within:ring-white/20
-          transition-all duration-200
+          border border-white/10
         "
       >
         <form 
-          onSubmit={handleSubmit} 
-          className="flex-1 flex items-center gap-3"
+          onSubmit={handleSubmit}
+          className="flex-1 flex items-center gap-2"
         >
           <input
             ref={inputRef}
@@ -119,78 +117,54 @@ export default function InputArea({
             className="
               flex-1
               bg-transparent
-              text-white placeholder-white/50
-              text-lg
-              py-2 px-3
-              rounded-xl
-              outline-none
+              text-white
+              placeholder-white/50
+              focus:outline-none
               disabled:opacity-50
-              transition-opacity duration-200
+              disabled:cursor-not-allowed
             "
             aria-label="Message input field"
           />
-
+          
           <Tooltip content="Send message (Cmd/Ctrl + Enter)">
-            <motion.button
+            <button
               type="submit"
               disabled={!input.trim() || isLoading}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
               className="
-                p-3
-                rounded-xl
-                bg-white/10
-                hover:bg-white/20
+                p-2
+                text-white/80 hover:text-white
                 disabled:opacity-50
-                disabled:hover:bg-white/10
-                transition-colors duration-200
+                disabled:cursor-not-allowed
+                transition-colors
               "
               aria-label="Send message"
             >
-              <PaperAirplaneIcon className="w-6 h-6 text-white" />
-            </motion.button>
+              <PaperAirplaneIcon className="w-5 h-5" />
+            </button>
           </Tooltip>
         </form>
 
-        <div className="flex-shrink-0 pl-2 border-l border-white/10">
+        <div className="flex items-center">
+          <div className="w-px h-6 bg-white/10 mx-2" role="separator" />
+          
           <Tooltip content="Voice input">
-            <motion.button
+            <button
               type="button"
               onClick={handleVoiceInput}
               disabled={isLoading}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
               className="
-                p-3
-                rounded-xl
-                bg-white/10
-                hover:bg-white/20
+                p-2
+                text-white/80 hover:text-white
                 disabled:opacity-50
-                disabled:hover:bg-white/10
-                transition-colors duration-200
+                disabled:cursor-not-allowed
+                transition-colors
               "
               aria-label="Activate voice input"
             >
-              <MicrophoneIcon className="w-6 h-6 text-white" />
-            </motion.button>
+              <MicrophoneIcon className="w-5 h-5" />
+            </button>
           </Tooltip>
         </div>
-      </motion.div>
-
-      {/* Keyboard shortcut hint */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.5 }}
-        className="
-          absolute -bottom-8
-          left-1/2 transform -translate-x-1/2
-          text-sm text-white/40
-          pointer-events-none
-          select-none
-        "
-      >
-        Press <kbd className="px-1.5 py-0.5 rounded bg-white/10 text-white/60">Tab</kbd> to navigate
       </motion.div>
     </div>
   )
