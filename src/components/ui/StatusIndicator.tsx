@@ -11,30 +11,31 @@ import {
   slideUpAnimation, 
   stateAnimationVariants 
 } from '@/utils/animation'
+import { formatErrorMessage } from '@/utils/errors'
 
 interface StatusIndicatorProps {
   className?: string;
+  autoHideSuccess?: boolean;
+  autoHideDelay?: number;
 }
 
-export default function StatusIndicator({ className = "" }: StatusIndicatorProps) {
+export default function StatusIndicator({ 
+  className = "",
+  autoHideSuccess = true,
+  autoHideDelay = 3000,
+}: StatusIndicatorProps) {
   const { isLoading, error, success } = useUIState()
-  const { clearError, setSuccess } = useUIActions()
-
-  // Helper to get error message
-  const getErrorMessage = (error: ErrorState | null) => {
-    if (!error) return ''
-    return error.message || 'An unexpected error occurred'
-  }
+  const { clearError, setSuccess, retryLastAction } = useUIActions()
 
   // Auto-hide success message
   useEffect(() => {
-    if (success) {
+    if (success && autoHideSuccess) {
       const timer = setTimeout(() => {
         setSuccess(false)
-      }, 3000)
+      }, autoHideDelay)
       return () => clearTimeout(timer)
     }
-  }, [success, setSuccess])
+  }, [success, setSuccess, autoHideSuccess, autoHideDelay])
 
   return (
     <motion.div
@@ -103,15 +104,23 @@ export default function StatusIndicator({ className = "" }: StatusIndicatorProps
             <div className="flex-1 min-w-0">
               <p className="text-red-100 font-medium">Error</p>
               <p className="text-red-200/80 text-sm truncate">
-                {getErrorMessage(error)}
+                {formatErrorMessage(error)}
               </p>
               {error.recoverable && (
                 <div className="flex gap-2 mt-2">
                   {error.retryAction && (
                     <button
-                      onClick={error.retryAction}
-                      className="text-xs text-red-200 hover:text-red-100 transition-colors"
+                      onClick={() => retryLastAction()}
+                      className="
+                        text-xs text-red-200 hover:text-red-100 
+                        transition-colors flex items-center gap-1
+                      "
                     >
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                          d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" 
+                        />
+                      </svg>
                       Retry
                     </button>
                   )}

@@ -18,7 +18,7 @@ export interface UISlice {
   ui: UIState;
   setLoading: (isLoading: boolean) => void;
   setError: (error: ErrorState | null) => void;
-  setSuccess: (success: boolean) => void;
+  setSuccess: (success: boolean | string) => void;
   clearError: () => void;
 }
 

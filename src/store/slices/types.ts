@@ -3,22 +3,27 @@
  */
 
 // UI State Types
-export interface UIState {
-  isLoading: boolean;
-  error: ErrorState | null;
-  success: boolean;
-}
+import { StateHistoryEntry } from '../types/transitions';
+
+export type ErrorType = 'validation' | 'network' | 'auth' | 'system' | 'unknown';
 
 export interface ErrorState {
   type: ErrorType;
   message: string;
   context?: Record<string, unknown>;
   recoverable: boolean;
-  timestamp: number;
   retryAction?: () => void;
+  timestamp: number;
 }
 
-export type ErrorType = 'validation' | 'network' | 'auth' | 'unknown';
+export interface UIState {
+  isLoading: boolean;
+  error: ErrorState | null;
+  success: boolean | string;
+  trackHistory: boolean;
+  history: StateHistoryEntry[];
+  historyIndex: number;
+}
 
 // Orb State Types
 export interface OrbState {
