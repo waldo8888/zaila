@@ -20,8 +20,28 @@ body {
 
 /* Focus styles */
 *:focus-visible {
-  outline: 2px solid white;
-  outline-offset: 2px;
+  outline: none;
+  @apply ring-2 ring-white ring-offset-2 ring-offset-black;
+}
+
+[role="button"]:focus-visible,
+button:focus-visible,
+a:focus-visible {
+  @apply ring-2 ring-white ring-offset-2 ring-offset-black scale-[1.02] transition-transform;
+}
+
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  @apply ring-2 ring-white/80 ring-offset-1 ring-offset-black/50;
+}
+
+/* High contrast focus styles for Windows High Contrast Mode */
+@media (forced-colors: active) {
+  *:focus-visible {
+    outline: 2px solid CanvasText;
+    outline-offset: 2px;
+  }
 }
 
 /* Scrollbar styles */
