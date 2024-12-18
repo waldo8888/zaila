@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useMemo, useCallback } from 'react';
 import { useOrbState, useOrbActions } from '@/store/hooks/useOrb';
 import { OrbState, OrbAnimationState, TransitionConfig } from '@/store/slices/types';
 import { Orb } from './Orb';
+import { useFrame } from '@react-three/fiber';
 
 interface OrbStateManagerProps {
   children?: React.ReactNode;
@@ -56,77 +57,40 @@ export const OrbStateManager: React.FC<OrbStateManagerProps> = ({ children }) =>
     updatePerformanceMetrics
   } = useOrbActions();
 
-  const transitionRef = useRef<number | null>(null);
+  // Refs for animation state
   const startTimeRef = useRef<number | null>(null);
   const lastFrameTimeRef = useRef<number | null>(null);
   const rafIdRef = useRef<number | null>(null);
   const fpsRef = useRef<number[]>([]);
-  const qualityLevelRef = useRef<keyof typeof QUALITY_LEVELS>('HIGH');
+  const qualityLevelRef = useRef<keyof typeof QUALITY_LEVELS>(qualityLevel);
 
-  // State configuration with proper typing
-  const stateConfig = useMemo<Record<OrbAnimationState, TransitionConfig>>(() => ({
-    idle: { duration: 800, easing: 'easeInOut' },
-    loading: { duration: 600, easing: 'easeOut' },
-    success: { duration: 400, easing: 'easeOut' },
-    error: { duration: 500, easing: 'easeInOut' },
-    active: { duration: 600, easing: 'easeOut' },
-    inactive: { duration: 800, easing: 'easeInOut' }
-  }), []);
-
-  // Easing functions
-  const easingFunctions = {
-    linear: (t: number) => t,
-    easeIn: (t: number) => t * t,
-    easeOut: (t: number) => 1 - Math.pow(1 - t, 2),
-    easeInOut: (t: number) => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2
-  };
-
-  const handleStateTransition = useCallback((currentTime: number) => {
-    if (!startTimeRef.current || !transitionRef.current) return;
-
-    const elapsed = currentTime - startTimeRef.current;
-    const progress = Math.min(elapsed / transitionDuration, 1);
-    const easing = easingFunctions[stateConfig[animationState as OrbAnimationState].easing];
-    const easedProgress = easing(progress);
-
-    setTransitionProgress(easedProgress);
-
-    if (progress >= 1) {
-      startTimeRef.current = null;
-      transitionRef.current = null;
-      setPreviousState(null);
-    } else {
-      rafIdRef.current = requestAnimationFrame(handleStateTransition);
-    }
-  }, [animationState, transitionDuration, setTransitionProgress, setPreviousState, stateConfig]);
-
+  // Update quality level ref when prop changes
   useEffect(() => {
-    if (previousState !== animationState && animationState) {
-      startTimeRef.current = performance.now();
-      transitionRef.current = performance.now();
-      setTransitionDuration(stateConfig[animationState as OrbAnimationState].duration);
-      rafIdRef.current = requestAnimationFrame(handleStateTransition);
-    }
-
-    return () => {
-      if (rafIdRef.current) {
-        cancelAnimationFrame(rafIdRef.current);
-      }
-    };
-  }, [animationState, previousState, handleStateTransition, setTransitionDuration, stateConfig]);
+    qualityLevelRef.current = qualityLevel;
+  }, [qualityLevel]);
 
   // Performance monitoring
   const calculatePerformanceMetrics = useCallback((deltaTime: number) => {
-    const currentFPS = 1000 / deltaTime;
-    fpsRef.current.push(currentFPS);
+    // Ensure deltaTime is valid and non-zero
+    if (!deltaTime || deltaTime <= 0) return;
+
+    const currentFPS = Math.min(1000 / deltaTime, 120); // Cap at 120 FPS
     
-    // Keep last 60 frames for average
-    if (fpsRef.current.length > 60) {
-      fpsRef.current.shift();
+    // Filter out invalid FPS values
+    if (isFinite(currentFPS) && currentFPS > 0) {
+      fpsRef.current.push(currentFPS);
+      
+      // Keep last 60 frames for average
+      if (fpsRef.current.length > 60) {
+        fpsRef.current.shift();
+      }
     }
 
-    // Calculate average FPS
-    const avgFPS = fpsRef.current.reduce((a, b) => a + b) / fpsRef.current.length;
+    // Calculate average FPS if we have valid values
+    let avgFPS = 60; // Default to 60 FPS
+    if (fpsRef.current.length > 0) {
+      avgFPS = fpsRef.current.reduce((a, b) => a + b) / fpsRef.current.length;
+    }
 
     // Get memory usage if available
     const memory = (performance as any).memory 
@@ -165,7 +129,24 @@ export const OrbStateManager: React.FC<OrbStateManagerProps> = ({ children }) =>
     }
   }, [setParticleSystem, setQualityLevel, updatePerformanceMetrics]);
 
-  // Optimized animation frame handler
+  // Frame handler for performance monitoring
+  useFrame((state) => {
+    const timestamp = state.clock.getElapsedTime() * 1000;
+    const deltaTime = state.clock.getDelta() * 1000;
+    calculatePerformanceMetrics(deltaTime);
+  });
+
+  // State configuration with proper typing
+  const stateConfig = useMemo<Record<OrbAnimationState, TransitionConfig>>(() => ({
+    idle: { duration: 800, easing: 'easeInOut' },
+    loading: { duration: 600, easing: 'easeOut' },
+    success: { duration: 400, easing: 'easeOut' },
+    error: { duration: 500, easing: 'easeInOut' },
+    active: { duration: 600, easing: 'easeOut' },
+    inactive: { duration: 800, easing: 'easeInOut' }
+  }), []);
+
+  // Animation frame handler
   const handleAnimationFrame = useCallback((timestamp: number) => {
     if (!startTimeRef.current) {
       startTimeRef.current = timestamp;
@@ -175,9 +156,6 @@ export const OrbStateManager: React.FC<OrbStateManagerProps> = ({ children }) =>
     // Calculate delta time for smooth animations
     const deltaTime = timestamp - (lastFrameTimeRef.current || timestamp);
     lastFrameTimeRef.current = timestamp;
-
-    // Update performance metrics
-    calculatePerformanceMetrics(deltaTime);
 
     // Calculate progress with time smoothing
     const elapsed = timestamp - startTimeRef.current;
@@ -198,7 +176,7 @@ export const OrbStateManager: React.FC<OrbStateManagerProps> = ({ children }) =>
       startTimeRef.current = null;
       lastFrameTimeRef.current = null;
     }
-  }, [animationState, transitionDuration, transitionProgress, setTransitionProgress, setPreviousState, calculatePerformanceMetrics]);
+  }, [animationState, transitionDuration, transitionProgress, setTransitionProgress, setPreviousState, stateConfig]);
 
   // Handle animation state transitions
   useEffect(() => {
