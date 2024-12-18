@@ -16,13 +16,18 @@ const DEFAULT_PARTICLE_CONFIG: ParticleSystemConfig = {
 
 const DEFAULT_ORB_STATE: OrbState = {
   isAnimating: false,
-  interactionMode: 'idle',
+  interactionMode: 'none',
   animationState: 'idle',
   transitionDuration: 0.3,
   transitionProgress: 0,
   previousState: null,
   particleSystem: DEFAULT_PARTICLE_CONFIG,
-  animationSpeed: 1
+  animationSpeed: 1,
+  transitionConfig: {
+    duration: 800,
+    easing: 'easeInOut'
+  },
+  transitionStartTime: null
 };
 
 export const createOrbSlice: StateCreator<Store, [], [], OrbSlice> = (set) => ({
@@ -41,9 +46,9 @@ export const createOrbSlice: StateCreator<Store, [], [], OrbSlice> = (set) => ({
   setAnimationState: (animState: OrbAnimationState) => {
     const particleSystem = {
       ...DEFAULT_PARTICLE_CONFIG,
-      enabled: animState === 'processing',
-      emissionRate: animState === 'processing' ? 100 : 50,
-      particleColor: animState === 'processing' ? '#64B5F6' : '#ffffff',
+      enabled: animState === 'loading',
+      emissionRate: animState === 'loading' ? 100 : 50,
+      particleColor: animState === 'loading' ? '#64B5F6' : '#ffffff',
     };
 
     set((state) => ({ 

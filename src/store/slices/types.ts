@@ -54,6 +54,11 @@ export interface ParticleSystemConfig {
   qualityLevel: 'HIGH' | 'MEDIUM' | 'LOW';
 }
 
+export interface TransitionConfig {
+  duration: number;
+  easing: 'linear' | 'easeIn' | 'easeOut' | 'easeInOut';
+}
+
 export interface OrbState {
   isAnimating: boolean;
   interactionMode: OrbInteractionMode;
@@ -63,6 +68,8 @@ export interface OrbState {
   previousState: OrbAnimationState | null;
   particleSystem: ParticleSystemConfig;
   animationSpeed: number;
+  transitionConfig: TransitionConfig;
+  transitionStartTime: number | null;
 }
 
 export interface OrbSlice {
@@ -77,15 +84,9 @@ export interface OrbSlice {
   setParticleSystem: (config: Partial<ParticleSystemConfig>) => void;
 }
 
-export type OrbInteractionMode = 'idle' | 'hover' | 'active' | 'passive';
+export type OrbInteractionMode = 'none' | 'hover' | 'click' | 'drag';
 
-export type OrbAnimationState = 
-  | 'idle'
-  | 'processing'
-  | 'success'
-  | 'error'
-  | 'active' 
-  | 'inactive';
+export type OrbAnimationState = 'idle' | 'active' | 'success' | 'error' | 'inactive' | 'loading';
 
 // Session State Types
 export interface SessionState {

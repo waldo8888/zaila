@@ -47,7 +47,8 @@ export function useAsyncOperation<T>() {
         const result = await operation();
 
         if (showSuccess && successMessage) {
-          setSuccess(successMessage);
+          setSuccess(true);
+          // Handle success message separately if needed
         } else if (showSuccess) {
           setSuccess(true);
         }

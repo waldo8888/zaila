@@ -7,13 +7,18 @@ import {
   UIState, 
   ErrorState, 
   ErrorType,
-  OrbState, 
-  OrbAnimationState, 
-  OrbInteractionMode,
   SessionState,
   PreferencesState,
-  ParticleSystemConfig
+  ParticleSystemConfig,
+  TransitionConfig
 } from './slices/types';
+
+import { 
+  OrbState, 
+  OrbAnimationState, 
+  OrbInteractionMode 
+} from './slices/orb.types';
+
 import { StateHistoryEntry } from './types/transitions';
 
 // Re-export types
@@ -27,7 +32,8 @@ export type {
   SessionState,
   PreferencesState,
   ParticleSystemConfig,
-  StateHistoryEntry
+  StateHistoryEntry,
+  TransitionConfig
 };
 
 // Slice Interfaces
@@ -73,11 +79,7 @@ export interface PreferencesSlice {
 }
 
 // Combined Store Type
-export interface Store extends 
-  UISlice,
-  OrbSlice,
-  SessionSlice,
-  PreferencesSlice {}
+export type Store = UISlice & OrbSlice & SessionSlice & PreferencesSlice;
 
 // Slice Creator Types
 export type UISliceCreator = StateCreator<Store, [], [], UISlice>;

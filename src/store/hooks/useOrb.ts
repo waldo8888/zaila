@@ -1,8 +1,13 @@
 import { useStore } from '../store';
 import { Store } from '../types';
-import { OrbState, OrbSlice } from '../slices/types';
+import { 
+  OrbState, 
+  OrbSlice, 
+  OrbAnimationState, 
+  OrbInteractionMode, 
+  ParticleSystemConfig 
+} from '../slices/types';
 import { useCallback } from 'react';
-import { OrbAnimationState, OrbInteractionMode, ParticleSystemConfig } from '../types';
 
 export const useOrb = (): OrbSlice => {
   const store = useStore();

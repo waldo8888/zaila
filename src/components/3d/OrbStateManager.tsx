@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useMemo, useCallback } from 'react';
 import { useOrbState, useOrbActions } from '@/store/hooks/useOrb';
-import { OrbState, OrbAnimationState } from '@/store/types';
+import { OrbState, OrbAnimationState, TransitionConfig } from '@/store/slices/types';
 import { Orb } from './Orb';
 
 interface OrbStateManagerProps {
@@ -53,22 +53,64 @@ export const OrbStateManager: React.FC<OrbStateManagerProps> = ({ children }) =>
     setParticleSystem
   } = useOrbActions();
 
-  const transitionRef = useRef<number>();
-  const startTimeRef = useRef<number>();
-  const lastFrameTimeRef = useRef<number>();
-  const rafIdRef = useRef<number>();
+  const transitionRef = useRef<number | null>(null);
+  const startTimeRef = useRef<number | null>(null);
+  const lastFrameTimeRef = useRef<number | null>(null);
+  const rafIdRef = useRef<number | null>(null);
   const fpsRef = useRef<number[]>([]);
   const qualityLevelRef = useRef<keyof typeof QUALITY_LEVELS>('HIGH');
 
-  // Memoize state configuration
-  const stateConfig = useMemo(() => ({
+  // State configuration with proper typing
+  const stateConfig = useMemo<Record<OrbAnimationState, TransitionConfig>>(() => ({
     idle: { duration: 800, easing: 'easeInOut' },
-    processing: { duration: 600, easing: 'easeOut' },
+    loading: { duration: 600, easing: 'easeOut' },
     success: { duration: 400, easing: 'easeOut' },
     error: { duration: 500, easing: 'easeInOut' },
     active: { duration: 600, easing: 'easeOut' },
     inactive: { duration: 800, easing: 'easeInOut' }
-  } as const), []);
+  }), []);
+
+  // Easing functions
+  const easingFunctions = {
+    linear: (t: number) => t,
+    easeIn: (t: number) => t * t,
+    easeOut: (t: number) => 1 - Math.pow(1 - t, 2),
+    easeInOut: (t: number) => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2
+  };
+
+  const handleStateTransition = useCallback((currentTime: number) => {
+    if (!startTimeRef.current || !transitionRef.current) return;
+
+    const elapsed = currentTime - startTimeRef.current;
+    const progress = Math.min(elapsed / transitionDuration, 1);
+    const easing = easingFunctions[stateConfig[animationState as OrbAnimationState].easing];
+    const easedProgress = easing(progress);
+
+    setTransitionProgress(easedProgress);
+
+    if (progress >= 1) {
+      startTimeRef.current = null;
+      transitionRef.current = null;
+      setPreviousState(null);
+    } else {
+      rafIdRef.current = requestAnimationFrame(handleStateTransition);
+    }
+  }, [animationState, transitionDuration, setTransitionProgress, setPreviousState, stateConfig]);
+
+  useEffect(() => {
+    if (previousState !== animationState && animationState) {
+      startTimeRef.current = performance.now();
+      transitionRef.current = performance.now();
+      setTransitionDuration(stateConfig[animationState as OrbAnimationState].duration);
+      rafIdRef.current = requestAnimationFrame(handleStateTransition);
+    }
+
+    return () => {
+      if (rafIdRef.current) {
+        cancelAnimationFrame(rafIdRef.current);
+      }
+    };
+  }, [animationState, previousState, handleStateTransition, setTransitionDuration, stateConfig]);
 
   // Performance monitoring
   const updatePerformanceMetrics = useCallback((deltaTime: number) => {
@@ -136,8 +178,8 @@ export const OrbStateManager: React.FC<OrbStateManagerProps> = ({ children }) =>
       // Clean up
       setPreviousState(null);
       setTransitionProgress(0);
-      startTimeRef.current = undefined;
-      lastFrameTimeRef.current = undefined;
+      startTimeRef.current = null;
+      lastFrameTimeRef.current = null;
     }
   }, [animationState, transitionDuration, transitionProgress, setTransitionProgress, setPreviousState, updatePerformanceMetrics]);
 

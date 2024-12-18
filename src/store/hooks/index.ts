@@ -3,7 +3,7 @@ import { Store } from '../types';
 import { useOrbActions, useOrbState } from './selectors';
 import { usePreferences } from './usePreferences';
 import { useOrb } from './useOrb';
-import { useUI } from './useUI';
+import { useUI, useLoading } from './useUI';
 import { useSession } from './useSession';
 
 export const useStoreSelector = <T>(selector: (state: Store) => T): T => {
@@ -17,5 +17,6 @@ export {
   usePreferences,
   useOrb,
   useUI,
-  useSession
+  useSession,
+  useLoading
 };

@@ -3,6 +3,11 @@ import { useStore } from '@/store';
 import { ErrorState, ErrorType } from '../slices/types';
 import { createErrorState } from '../middleware/error';
 
+export const useLoading = () => {
+  const store = useStore();
+  return store.ui.isLoading;
+};
+
 export const useUI = () => {
   const store = useStore();
 

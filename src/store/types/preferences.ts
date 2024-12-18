@@ -2,7 +2,7 @@
  * Preference types and validation
  */
 
-import { Theme, FontSize } from '../types';
+import { Theme, FontSize } from './theme';
 
 export interface PreferencesState {
   theme: Theme;

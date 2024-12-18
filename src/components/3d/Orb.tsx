@@ -3,7 +3,7 @@
 import { useRef, useMemo, useEffect, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { useOrbState } from '@/store/hooks/useOrb';
-import { OrbState } from '@/store/types';
+import { OrbState, OrbAnimationState, TransitionConfig } from '@/store/slices/types';
 import { BufferGeometry, Float32BufferAttribute, Points, ShaderMaterial, Color, AdditiveBlending } from 'three';
 import { OrbParticleSystem } from './OrbParticleSystem';
 
@@ -68,6 +68,10 @@ const fragmentShader = `
   }
 `;
 
+interface OrbProps {
+  state?: OrbAnimationState;
+}
+
 interface OrbConfig {
   baseColor: string;  
   emissiveColor: string;
@@ -78,13 +82,9 @@ interface OrbConfig {
   alpha: number;
 }
 
-interface OrbProps {
-  state?: OrbState['animationState'];
-}
-
-function getStateConfig(state: OrbState['animationState']): OrbConfig {
+function getStateConfig(state: OrbAnimationState): OrbConfig {
   switch (state) {
-    case 'processing':
+    case 'loading':
       return {
         baseColor: '#64B5F6',
         emissiveColor: '#2196F3',
@@ -148,12 +148,62 @@ function getStateConfig(state: OrbState['animationState']): OrbConfig {
   }
 }
 
+function interpolateConfig(fromConfig: OrbConfig, toConfig: OrbConfig, progress: number): OrbConfig {
+  const lerpColor = (start: string, end: string, t: number) => {
+    const startColor = new Color(start);
+    const endColor = new Color(end);
+    const result = new Color();
+    result.r = startColor.r + (endColor.r - startColor.r) * t;
+    result.g = startColor.g + (endColor.g - startColor.g) * t;
+    result.b = startColor.b + (endColor.b - startColor.b) * t;
+    return `#${result.getHexString()}`;
+  };
+
+  const lerp = (start: number, end: number, t: number) => start + (end - start) * t;
+
+  return {
+    baseColor: lerpColor(fromConfig.baseColor, toConfig.baseColor, progress),
+    emissiveColor: lerpColor(fromConfig.emissiveColor, toConfig.emissiveColor, progress),
+    speed: lerp(fromConfig.speed, toConfig.speed, progress),
+    noiseStrength: lerp(fromConfig.noiseStrength, toConfig.noiseStrength, progress),
+    noiseFrequency: lerp(fromConfig.noiseFrequency, toConfig.noiseFrequency, progress),
+    radius: lerp(fromConfig.radius, toConfig.radius, progress),
+    alpha: lerp(fromConfig.alpha, toConfig.alpha, progress)
+  };
+}
+
 export const Orb: React.FC<OrbProps> = ({ state = 'idle' }) => {
   const orbRef = useRef<Points>(null);
   const materialRef = useRef<ShaderMaterial>(null);
   const orbState = useOrbState();
-  const config = getStateConfig(state);
+  const [previousState, setPreviousState] = useState<OrbAnimationState>(state);
+  const [transitionProgress, setTransitionProgress] = useState(0);
   const [time, setTime] = useState(0);
+
+  useEffect(() => {
+    if (state !== previousState) {
+      setPreviousState(state);
+      setTransitionProgress(0);
+    }
+  }, [state, previousState]);
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      if (transitionProgress < 1) {
+        setTransitionProgress(transitionProgress + 0.01);
+      }
+    }, 16);
+    return () => clearInterval(intervalId);
+  }, [transitionProgress]);
+
+  const currentConfig = useMemo(() => {
+    const targetConfig = getStateConfig(state);
+    if (previousState && transitionProgress < 1) {
+      const prevConfig = getStateConfig(previousState);
+      return interpolateConfig(prevConfig, targetConfig, transitionProgress);
+    }
+    return targetConfig;
+  }, [state, previousState, transitionProgress]);
 
   // Animation loop to change shape
   useFrame((state) => {
@@ -171,7 +221,7 @@ export const Orb: React.FC<OrbProps> = ({ state = 'idle' }) => {
     const colors = [];
     const sizes = [];
     const angles = [];
-    const color = new Color(config.baseColor);
+    const color = new Color(currentConfig.baseColor);
 
     // Create points distributed on a sphere
     const numPoints = 5000; // Reduced number of points
@@ -221,7 +271,7 @@ export const Orb: React.FC<OrbProps> = ({ state = 'idle' }) => {
     geometry.setAttribute('angle', new Float32BufferAttribute(angles, 1));
 
     return geometry;
-  }, [config.baseColor, time]); // Add time as a dependency
+  }, [currentConfig.baseColor, time]); // Add time as a dependency
 
   // Create material with uniforms
   const material = useMemo(() => {
@@ -230,10 +280,10 @@ export const Orb: React.FC<OrbProps> = ({ state = 'idle' }) => {
       fragmentShader,
       uniforms: {
         uTime: { value: 0 },
-        uRadius: { value: config.radius },
-        uSpeed: { value: config.speed },
-        uNoiseStrength: { value: config.noiseStrength },
-        uNoiseFrequency: { value: config.noiseFrequency },
+        uRadius: { value: currentConfig.radius },
+        uSpeed: { value: currentConfig.speed },
+        uNoiseStrength: { value: currentConfig.noiseStrength },
+        uNoiseFrequency: { value: currentConfig.noiseFrequency },
       },
       transparent: true,
       depthWrite: true,
@@ -241,7 +291,7 @@ export const Orb: React.FC<OrbProps> = ({ state = 'idle' }) => {
       blending: AdditiveBlending,
       opacity: 1.0, // Set fixed opacity
     });
-  }, [config]);
+  }, [currentConfig]);
 
   return (
     <group>

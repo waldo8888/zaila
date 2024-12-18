@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useStore } from '@/store';
 import { useOrbState, useOrbActions } from '@/store/hooks';
 import { getStateHistory, clearStateHistory } from '@/store/middleware/debug';
-import { type OrbState } from '../../store/types';
+import { OrbAnimationState, type OrbState } from '../../store/types';
 import { Stats } from '@react-three/drei';
 
 interface DebugPanelProps {
@@ -57,7 +57,7 @@ export const DebugPanel: React.FC<DebugPanelProps> = ({ className = '' }) => {
   const [history, setHistory] = useState(getStateHistory());
   const store = useStore();
   const { animationState, interactionMode, animationSpeed } = useOrbState();
-  const { setAnimationState, setInteractionMode, setOrbAnimationSpeed } = useOrbActions();
+  const { setAnimationState, setInteractionMode, setAnimationSpeed } = useOrbActions();
   const stats = usePerformanceMonitor();
 
   useEffect(() => {
@@ -117,7 +117,7 @@ export const DebugPanel: React.FC<DebugPanelProps> = ({ className = '' }) => {
     ));
   };
 
-  const states: OrbState['animationState'][] = ['idle', 'processing', 'success', 'error'];
+  const states: OrbAnimationState[] = ['idle', 'loading', 'success', 'error', 'active', 'inactive'];
 
   return (
     <div
@@ -199,16 +199,16 @@ export const DebugPanel: React.FC<DebugPanelProps> = ({ className = '' }) => {
               <button
                 onClick={() =>
                   setInteractionMode(
-                    interactionMode === 'active' ? 'passive' : 'active'
+                    interactionMode === 'none' ? 'hover' : 'none'
                   )
                 }
                 className={`w-full px-3 py-2 rounded ${
-                  interactionMode === 'active'
+                  interactionMode === 'hover'
                     ? 'bg-green-500'
                     : 'bg-gray-700'
                 }`}
               >
-                {interactionMode === 'active' ? 'Active Mode' : 'Passive Mode'}
+                {interactionMode === 'hover' ? 'Interactive Mode' : 'Static Mode'}
               </button>
             </div>
             <div className="mt-2">
@@ -219,7 +219,7 @@ export const DebugPanel: React.FC<DebugPanelProps> = ({ className = '' }) => {
                 max="2"
                 step="0.1"
                 value={animationSpeed}
-                onChange={(e) => setOrbAnimationSpeed(parseFloat(e.target.value))}
+                onChange={(e) => setAnimationSpeed(parseFloat(e.target.value))}
                 className="w-full"
               />
               <div className="text-sm text-gray-400 mt-1">
