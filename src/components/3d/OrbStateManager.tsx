@@ -41,7 +41,8 @@ export const OrbStateManager: React.FC<OrbStateManagerProps> = ({ children }) =>
     interactionMode,
     transitionProgress,
     previousState,
-    transitionDuration 
+    transitionDuration,
+    qualityLevel
   } = useOrbState();
   
   const { 
@@ -50,7 +51,9 @@ export const OrbStateManager: React.FC<OrbStateManagerProps> = ({ children }) =>
     setTransitionProgress,
     setPreviousState,
     setTransitionDuration,
-    setParticleSystem
+    setParticleSystem,
+    setQualityLevel,
+    updatePerformanceMetrics
   } = useOrbActions();
 
   const transitionRef = useRef<number | null>(null);
@@ -113,7 +116,7 @@ export const OrbStateManager: React.FC<OrbStateManagerProps> = ({ children }) =>
   }, [animationState, previousState, handleStateTransition, setTransitionDuration, stateConfig]);
 
   // Performance monitoring
-  const updatePerformanceMetrics = useCallback((deltaTime: number) => {
+  const calculatePerformanceMetrics = useCallback((deltaTime: number) => {
     const currentFPS = 1000 / deltaTime;
     fpsRef.current.push(currentFPS);
     
@@ -124,6 +127,18 @@ export const OrbStateManager: React.FC<OrbStateManagerProps> = ({ children }) =>
 
     // Calculate average FPS
     const avgFPS = fpsRef.current.reduce((a, b) => a + b) / fpsRef.current.length;
+
+    // Get memory usage if available
+    const memory = (performance as any).memory 
+      ? Math.round((performance as any).memory.usedJSHeapSize / 1048576) 
+      : 0;
+
+    // Update performance metrics in store
+    updatePerformanceMetrics({
+      fps: Math.round(avgFPS),
+      memory,
+      renderTime: Math.round(deltaTime * 100) / 100
+    });
 
     // Determine quality level based on FPS
     let newQualityLevel: keyof typeof QUALITY_LEVELS = qualityLevelRef.current;
@@ -141,12 +156,14 @@ export const OrbStateManager: React.FC<OrbStateManagerProps> = ({ children }) =>
       qualityLevelRef.current = newQualityLevel;
       const quality = QUALITY_LEVELS[newQualityLevel];
       
+      setQualityLevel(newQualityLevel);
       setParticleSystem({
         maxParticles: quality.particleCount,
-        particleSize: quality.particleSize
+        particleSize: quality.particleSize,
+        glowIntensity: quality.glowIntensity
       });
     }
-  }, [setParticleSystem]);
+  }, [setParticleSystem, setQualityLevel, updatePerformanceMetrics]);
 
   // Optimized animation frame handler
   const handleAnimationFrame = useCallback((timestamp: number) => {
@@ -160,7 +177,7 @@ export const OrbStateManager: React.FC<OrbStateManagerProps> = ({ children }) =>
     lastFrameTimeRef.current = timestamp;
 
     // Update performance metrics
-    updatePerformanceMetrics(deltaTime);
+    calculatePerformanceMetrics(deltaTime);
 
     // Calculate progress with time smoothing
     const elapsed = timestamp - startTimeRef.current;
@@ -181,7 +198,7 @@ export const OrbStateManager: React.FC<OrbStateManagerProps> = ({ children }) =>
       startTimeRef.current = null;
       lastFrameTimeRef.current = null;
     }
-  }, [animationState, transitionDuration, transitionProgress, setTransitionProgress, setPreviousState, updatePerformanceMetrics]);
+  }, [animationState, transitionDuration, transitionProgress, setTransitionProgress, setPreviousState, calculatePerformanceMetrics]);
 
   // Handle animation state transitions
   useEffect(() => {

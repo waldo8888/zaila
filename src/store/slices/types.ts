@@ -42,22 +42,33 @@ export interface UISlice {
 }
 
 // Orb State Types
+export type QualityLevel = 'HIGH' | 'MEDIUM' | 'LOW';
+
+export interface PerformanceMetrics {
+  fps: number;
+  memory: number;
+  renderTime: number;
+}
+
 export interface ParticleSystemConfig {
   enabled: boolean;
   emissionRate: number;
   particleLifetime: number;
-  particleSize: number;
   particleSpeed: number;
   particleColor: string;
   maxParticles: number;
+  particleSize: number;
   glowIntensity: number;
-  qualityLevel: 'HIGH' | 'MEDIUM' | 'LOW';
 }
 
 export interface TransitionConfig {
   duration: number;
   easing: 'linear' | 'easeIn' | 'easeOut' | 'easeInOut';
 }
+
+export type OrbInteractionMode = 'none' | 'hover' | 'click' | 'drag';
+
+export type OrbAnimationState = 'idle' | 'active' | 'success' | 'error' | 'inactive' | 'loading';
 
 export interface OrbState {
   isAnimating: boolean;
@@ -70,6 +81,8 @@ export interface OrbState {
   animationSpeed: number;
   transitionConfig: TransitionConfig;
   transitionStartTime: number | null;
+  qualityLevel: QualityLevel;
+  performanceMetrics: PerformanceMetrics;
 }
 
 export interface OrbSlice {
@@ -82,11 +95,9 @@ export interface OrbSlice {
   setTransitionDuration: (duration: number) => void;
   setAnimationSpeed: (speed: number) => void;
   setParticleSystem: (config: Partial<ParticleSystemConfig>) => void;
+  setQualityLevel: (level: QualityLevel) => void;
+  updatePerformanceMetrics: (metrics: PerformanceMetrics) => void;
 }
-
-export type OrbInteractionMode = 'none' | 'hover' | 'click' | 'drag';
-
-export type OrbAnimationState = 'idle' | 'active' | 'success' | 'error' | 'inactive' | 'loading';
 
 // Session State Types
 export interface SessionState {

@@ -5,7 +5,9 @@ import {
   OrbSlice, 
   OrbAnimationState, 
   OrbInteractionMode, 
-  ParticleSystemConfig 
+  ParticleSystemConfig, 
+  QualityLevel, 
+  PerformanceMetrics 
 } from '../slices/types';
 import { useCallback } from 'react';
 
@@ -47,6 +49,14 @@ export const useOrb = (): OrbSlice => {
 
     setParticleSystem: useCallback((config: Partial<ParticleSystemConfig>) => {
       store.setParticleSystem(config);
+    }, [store]),
+
+    setQualityLevel: useCallback((level: QualityLevel) => {
+      store.setQualityLevel(level);
+    }, [store]),
+
+    updatePerformanceMetrics: useCallback((metrics: PerformanceMetrics) => {
+      store.updatePerformanceMetrics(metrics);
     }, [store])
   };
 
@@ -54,8 +64,8 @@ export const useOrb = (): OrbSlice => {
 };
 
 export const useOrbState = (): OrbState => {
-  const orb = useStore((state: Store) => state.orb);
-  return orb;
+  const store = useStore();
+  return store.orb;
 };
 
 export const useOrbActions = (): OrbSlice => {
@@ -73,6 +83,59 @@ export const useOrbActions = (): OrbSlice => {
     setPreviousState: store.setPreviousState,
     setTransitionDuration: store.setTransitionDuration,
     setAnimationSpeed: store.setAnimationSpeed,
-    setParticleSystem: store.setParticleSystem
+    setParticleSystem: store.setParticleSystem,
+    setQualityLevel: store.setQualityLevel,
+    updatePerformanceMetrics: store.updatePerformanceMetrics
   };
+};
+
+// Selector hooks for specific state values
+export const useOrbAnimating = (): boolean => {
+  const store = useStore();
+  return store.orb.isAnimating;
+};
+
+export const useOrbInteractionMode = (): OrbInteractionMode => {
+  const store = useStore();
+  return store.orb.interactionMode;
+};
+
+export const useOrbAnimationState = (): OrbAnimationState | null => {
+  const store = useStore();
+  return store.orb.animationState;
+};
+
+export const useOrbTransitionProgress = (): number => {
+  const store = useStore();
+  return store.orb.transitionProgress;
+};
+
+export const useOrbPreviousState = (): OrbAnimationState | null => {
+  const store = useStore();
+  return store.orb.previousState;
+};
+
+export const useOrbTransitionDuration = (): number => {
+  const store = useStore();
+  return store.orb.transitionDuration;
+};
+
+export const useOrbAnimationSpeed = (): number => {
+  const store = useStore();
+  return store.orb.animationSpeed;
+};
+
+export const useOrbParticleSystem = (): ParticleSystemConfig => {
+  const store = useStore();
+  return store.orb.particleSystem;
+};
+
+export const useOrbQualityLevel = (): QualityLevel => {
+  const store = useStore();
+  return store.orb.qualityLevel;
+};
+
+export const useOrbPerformanceMetrics = (): PerformanceMetrics => {
+  const store = useStore();
+  return store.orb.performanceMetrics;
 };

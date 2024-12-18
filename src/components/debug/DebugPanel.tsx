@@ -11,13 +11,22 @@ interface DebugPanelProps {
   className?: string;
 }
 
+interface PerformanceStats {
+  fps: number;
+  renderTime: number;
+  triangles: number;
+  memory: number;
+  qualityLevel: string;
+}
+
 // Performance monitoring hook
 function usePerformanceMonitor() {
-  const [stats, setStats] = useState({
+  const [stats, setStats] = useState<PerformanceStats>({
     fps: 0,
     renderTime: 0,
     triangles: 0,
-    memory: 0
+    memory: 0,
+    qualityLevel: 'HIGH'
   });
   const frameRef = useRef(0);
   const lastTimeRef = useRef(performance.now());
@@ -158,21 +167,27 @@ export const DebugPanel: React.FC<DebugPanelProps> = ({ className = '' }) => {
             </div>
           </div>
 
-          {/* Performance Stats */}
-          <div className="mb-4 p-4 bg-gray-800 rounded-lg">
-            <h4 className="text-sm text-gray-400 mb-2">Performance</h4>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="flex justify-between p-2 bg-gray-700 rounded">
-                <span>FPS</span>
-                <span className="text-green-400">{stats.fps}</span>
+          {/* Performance Metrics */}
+          <div className="border-t border-gray-700 pt-4">
+            <h3 className="text-sm font-medium mb-2">Performance Metrics</h3>
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              <div>
+                <span className="text-gray-400">FPS:</span>{' '}
+                <span className={`${stats.fps < 30 ? 'text-red-400' : stats.fps < 45 ? 'text-yellow-400' : 'text-green-400'}`}>
+                  {stats.fps}
+                </span>
               </div>
-              <div className="flex justify-between p-2 bg-gray-700 rounded">
-                <span>Render Time</span>
-                <span className="text-blue-400">{stats.renderTime}ms</span>
+              <div>
+                <span className="text-gray-400">Frame Time:</span>{' '}
+                <span>{stats.renderTime}ms</span>
               </div>
-              <div className="flex justify-between p-2 bg-gray-700 rounded">
-                <span>Memory</span>
-                <span className="text-purple-400">{stats.memory}MB</span>
+              <div>
+                <span className="text-gray-400">Memory:</span>{' '}
+                <span>{stats.memory}MB</span>
+              </div>
+              <div>
+                <span className="text-gray-400">Quality:</span>{' '}
+                <span className="text-blue-400">{stats.qualityLevel}</span>
               </div>
             </div>
           </div>
