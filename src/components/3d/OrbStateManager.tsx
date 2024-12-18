@@ -3,10 +3,10 @@
 import React, { useEffect, useRef } from 'react';
 import { useOrbState, useOrbActions } from '@/store/hooks/useOrb';
 import { OrbState, OrbAnimationState } from '@/store/types';
-import { ANIMATION_DURATION } from '@/utils/animation';
+import { Orb } from './Orb';
 
 interface OrbStateManagerProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
 }
 
 export const OrbStateManager: React.FC<OrbStateManagerProps> = ({ children }) => {
@@ -50,58 +50,23 @@ export const OrbStateManager: React.FC<OrbStateManagerProps> = ({ children }) =>
         setPreviousState(null);
         setTransitionProgress(0);
         startTimeRef.current = undefined;
-
-        // Reset to idle after success or error
-        if (animationState === 'success' || animationState === 'error') {
-          const resetTimer = setTimeout(() => {
-            setAnimationState('idle');
-          }, 2000);
-          return () => clearTimeout(resetTimer);
-        }
       }
     };
 
-    // Start transition if we have a previous state
-    if (previousState && previousState !== animationState) {
-      if (transitionRef.current) {
-        cancelAnimationFrame(transitionRef.current);
-      }
-      
-      // Set transition duration based on state change
-      const duration = ANIMATION_DURATION.normal;
-      setTransitionDuration(duration);
-      
-      // Start the transition
-      startTimeRef.current = undefined;
-      transitionRef.current = requestAnimationFrame(handleStateTransition);
-    }
+    // Start transition
+    transitionRef.current = requestAnimationFrame(handleStateTransition);
 
     return () => {
       if (transitionRef.current) {
         cancelAnimationFrame(transitionRef.current);
       }
     };
-  }, [
-    animationState,
-    previousState,
-    transitionDuration,
-    setTransitionProgress,
-    setPreviousState,
-    setAnimationState,
-    setTransitionDuration
-  ]);
+  }, [animationState, transitionDuration, setTransitionProgress, setPreviousState]);
 
-  // Handle interaction mode changes
-  useEffect(() => {
-    if (interactionMode === 'active') {
-      const currentState = animationState || 'idle';
-      setPreviousState(currentState);
-      setAnimationState('active');
-    } else if (interactionMode === 'passive' && animationState === 'active') {
-      setPreviousState('active');
-      setAnimationState('idle');
-    }
-  }, [interactionMode, animationState, setAnimationState, setPreviousState]);
-
-  return <>{children}</>;
+  return (
+    <group>
+      <Orb state={animationState} />
+      {children}
+    </group>
+  );
 };

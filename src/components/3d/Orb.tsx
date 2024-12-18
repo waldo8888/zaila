@@ -4,7 +4,8 @@ import { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { useOrbState } from '@/store/hooks/useOrb';
 import { OrbState } from '@/store/types';
-import { BufferGeometry, Float32BufferAttribute, Points, ShaderMaterial, Color } from 'three'
+import { BufferGeometry, Float32BufferAttribute, Points, ShaderMaterial, Color, AdditiveBlending } from 'three';
+import { OrbParticleSystem } from './OrbParticleSystem';
 
 // Vertex Shader
 const vertexShader = `
@@ -49,28 +50,24 @@ const vertexShader = `
       // Size attenuation
       gl_PointSize = size * (300.0 / -mvPosition.z);
   }
-`
+`;
 
 // Fragment Shader
 const fragmentShader = `
   uniform float uAlpha;
-
-  varying vec3 vColor;
+  
   varying vec3 vPosition;
+  varying vec3 vColor;
 
   void main() {
       // Create a circular point
-      vec2 center = gl_PointCoord - 0.5;
+      vec2 center = gl_PointCoord - vec2(0.5);
       float dist = length(center);
-      if (dist > 0.5) discard;
-
-      // Smooth edges
       float alpha = smoothstep(0.5, 0.4, dist) * uAlpha;
 
-      // Output final color
       gl_FragColor = vec4(vColor, alpha);
   }
-`
+`;
 
 interface OrbConfig {
   baseColor: string;
@@ -83,184 +80,146 @@ interface OrbConfig {
 }
 
 interface OrbProps {
-  state?: OrbState['animationState']
+  state?: OrbState['animationState'];
 }
 
-const getStateConfig = (state: OrbState['animationState']): OrbConfig => {
+function getStateConfig(state: OrbState['animationState']): OrbConfig {
   switch (state) {
-    case 'idle':
-      return {
-        baseColor: '#4a90e2',
-        emissiveColor: '#86c5f9',
-        speed: 0.5,
-        noiseStrength: 0.2,
-        noiseFrequency: 1.5,
-        radius: 1.0,
-        alpha: 0.8
-      };
     case 'processing':
       return {
-        baseColor: '#f5a623',
-        emissiveColor: '#fbd66d',
-        speed: 1.2,
-        noiseStrength: 0.4,
+        baseColor: '#64B5F6',
+        emissiveColor: '#2196F3',
+        speed: 2.0,
+        noiseStrength: 0.2,
         noiseFrequency: 2.0,
-        radius: 1.1,
-        alpha: 0.9
+        radius: 1.2,
+        alpha: 0.8,
       };
     case 'success':
       return {
-        baseColor: '#7ed321',
-        emissiveColor: '#b8e986',
-        speed: 0.8,
-        noiseStrength: 0.3,
-        noiseFrequency: 1.8,
-        radius: 1.2,
-        alpha: 1.0
+        baseColor: '#81C784',
+        emissiveColor: '#4CAF50',
+        speed: 1.0,
+        noiseStrength: 0.1,
+        noiseFrequency: 1.0,
+        radius: 1.0,
+        alpha: 1.0,
       };
     case 'error':
       return {
-        baseColor: '#d0021b',
-        emissiveColor: '#ff6b6b',
+        baseColor: '#E57373',
+        emissiveColor: '#F44336',
         speed: 1.5,
-        noiseStrength: 0.5,
-        noiseFrequency: 2.2,
-        radius: 0.9,
-        alpha: 0.7
+        noiseStrength: 0.3,
+        noiseFrequency: 3.0,
+        radius: 1.1,
+        alpha: 0.9,
       };
     case 'active':
       return {
-        baseColor: '#9013fe',
-        emissiveColor: '#bd10e0',
-        speed: 1.0,
-        noiseStrength: 0.35,
-        noiseFrequency: 1.7,
-        radius: 1.15,
-        alpha: 0.95
+        baseColor: '#FFB74D',
+        emissiveColor: '#FF9800',
+        speed: 1.2,
+        noiseStrength: 0.15,
+        noiseFrequency: 1.5,
+        radius: 1.1,
+        alpha: 0.9,
       };
     case 'inactive':
+      return {
+        baseColor: '#B0BEC5',
+        emissiveColor: '#78909C',
+        speed: 0.5,
+        noiseStrength: 0.05,
+        noiseFrequency: 0.5,
+        radius: 0.9,
+        alpha: 0.7,
+      };
+    case 'idle':
     default:
       return {
-        baseColor: '#4a4a4a',
-        emissiveColor: '#9b9b9b',
-        speed: 0.3,
+        baseColor: '#90CAF9',
+        emissiveColor: '#42A5F5',
+        speed: 0.8,
         noiseStrength: 0.1,
         noiseFrequency: 1.0,
-        radius: 0.8,
-        alpha: 0.6
+        radius: 1.0,
+        alpha: 0.8,
       };
   }
-};
+}
 
-export default function Orb({ state = 'idle' }: OrbProps) {
-  const pointsRef = useRef<Points>(null)
-  const materialRef = useRef<ShaderMaterial>(null)
-  const { 
-    animationState, 
-    previousState,
-    transitionProgress 
-  } = useOrbState()
+export const Orb: React.FC<OrbProps> = ({ state = 'idle' }) => {
+  const orbRef = useRef<Points>(null);
+  const materialRef = useRef<ShaderMaterial>(null);
+  const orbState = useOrbState();
+  const config = getStateConfig(state);
 
-  // Get configurations for current and previous states
-  const currentConfig = getStateConfig(state || animationState)
-
-  const previousConfig = previousState ? getStateConfig(previousState) : currentConfig
-
-  // Interpolate between states
-  const config = {
-    speed: previousConfig.speed + (currentConfig.speed - previousConfig.speed) * transitionProgress,
-    noiseStrength: previousConfig.noiseStrength + (currentConfig.noiseStrength - previousConfig.noiseStrength) * transitionProgress,
-    noiseFrequency: previousConfig.noiseFrequency + (currentConfig.noiseFrequency - previousConfig.noiseFrequency) * transitionProgress,
-    radius: previousConfig.radius + (currentConfig.radius - previousConfig.radius) * transitionProgress,
-    alpha: previousConfig.alpha + (currentConfig.alpha - previousConfig.alpha) * transitionProgress,
-  }
-
-  // Create geometry with particles
+  // Create geometry with attributes
   const geometry = useMemo(() => {
-    const geo = new BufferGeometry()
-    const positions = []
-    const colors = []
-    const sizes = []
-    const angles = []
+    const geometry = new BufferGeometry();
+    const positions = [];
+    const colors = [];
+    const sizes = [];
+    const angles = [];
+    const color = new Color(config.baseColor);
 
-    const particleCount = 10000
-    const radius = 1.5
-    const colorPalette = [
-      new Color('#ffffff'),
-      new Color('#8ab4f8'),
-      new Color('#c2e7ff'),
-      new Color('#1a73e8')
-    ]
+    // Create points distributed on a sphere
+    const numPoints = 2000;
+    for (let i = 0; i < numPoints; i++) {
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos(2 * Math.random() - 1);
+      const x = Math.sin(phi) * Math.cos(theta);
+      const y = Math.sin(phi) * Math.sin(theta);
+      const z = Math.cos(phi);
 
-    for (let i = 0; i < particleCount; i++) {
-      // Position on sphere surface
-      const theta = Math.random() * Math.PI * 2
-      const phi = Math.acos(Math.random() * 2 - 1)
-      const r = radius * (0.8 + Math.random() * 0.4) // Vary radius slightly
-
-      positions.push(
-        r * Math.sin(phi) * Math.cos(theta),
-        r * Math.sin(phi) * Math.sin(theta),
-        r * Math.cos(phi)
-      )
-
-      // Random color from palette
-      const color = colorPalette[Math.floor(Math.random() * colorPalette.length)]
-      colors.push(color.r, color.g, color.b)
-
-      // Random size
-      sizes.push(0.03 + Math.random() * 0.05 * Math.random())
-
-      // Random initial angle
-      angles.push(Math.random() * Math.PI * 2)
+      positions.push(x, y, z);
+      colors.push(color.r, color.g, color.b);
+      sizes.push(2 + Math.random() * 2);
+      angles.push(Math.random() * Math.PI * 2);
     }
 
-    geo.setAttribute('position', new Float32BufferAttribute(positions, 3))
-    geo.setAttribute('color', new Float32BufferAttribute(colors, 3))
-    geo.setAttribute('size', new Float32BufferAttribute(sizes, 1))
-    geo.setAttribute('angle', new Float32BufferAttribute(angles, 1))
+    geometry.setAttribute('position', new Float32BufferAttribute(positions, 3));
+    geometry.setAttribute('color', new Float32BufferAttribute(colors, 3));
+    geometry.setAttribute('size', new Float32BufferAttribute(sizes, 1));
+    geometry.setAttribute('angle', new Float32BufferAttribute(angles, 1));
 
-    return geo
-  }, [])
+    return geometry;
+  }, [config.baseColor]);
 
-  // Animation
-  useFrame((state, delta) => {
-    if (pointsRef.current && materialRef.current) {
-      // Update uniforms with interpolated values
-      materialRef.current.uniforms.uTime.value += delta * config.speed
-      materialRef.current.uniforms.uRadius.value = config.radius
-      materialRef.current.uniforms.uSpeed.value = config.speed
-      materialRef.current.uniforms.uNoiseStrength.value = config.noiseStrength
-      materialRef.current.uniforms.uNoiseFrequency.value = config.noiseFrequency
-      materialRef.current.uniforms.uAlpha.value = config.alpha
-      
-      // Gentle floating motion
-      const time = state.clock.getElapsedTime()
-      pointsRef.current.position.y = Math.sin(time * 0.5) * 0.1
-      
-      // Smooth rotation
-      pointsRef.current.rotation.y += delta * 0.1
+  // Create material with uniforms
+  const material = useMemo(() => {
+    return new ShaderMaterial({
+      vertexShader,
+      fragmentShader,
+      uniforms: {
+        uTime: { value: 0 },
+        uRadius: { value: config.radius },
+        uSpeed: { value: config.speed },
+        uNoiseStrength: { value: config.noiseStrength },
+        uNoiseFrequency: { value: config.noiseFrequency },
+        uAlpha: { value: config.alpha },
+      },
+      transparent: true,
+      depthWrite: false,
+      blending: AdditiveBlending,
+    });
+  }, [config]);
+
+  // Animation loop
+  useFrame((state) => {
+    if (materialRef.current) {
+      materialRef.current.uniforms.uTime.value = state.clock.getElapsedTime();
     }
-  })
+  });
 
   return (
-    <points ref={pointsRef} geometry={geometry}>
-      <shaderMaterial
-        ref={materialRef}
-        vertexShader={vertexShader}
-        fragmentShader={fragmentShader}
-        transparent
-        depthWrite={false}
-        blending={1}
-        uniforms={{
-          uTime: { value: 0 },
-          uRadius: { value: config.radius },
-          uSpeed: { value: config.speed },
-          uNoiseStrength: { value: config.noiseStrength },
-          uNoiseFrequency: { value: config.noiseFrequency },
-          uAlpha: { value: config.alpha }
-        }}
-      />
-    </points>
-  )
-}
+    <group>
+      <points ref={orbRef}>
+        <primitive object={geometry} attach="geometry" />
+        <primitive ref={materialRef} object={material} attach="material" />
+      </points>
+      <OrbParticleSystem config={orbState.particleSystem} />
+    </group>
+  );
+};

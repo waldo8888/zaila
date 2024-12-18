@@ -28,6 +28,16 @@ export interface UIState {
 }
 
 // Orb State Types
+export interface ParticleSystemConfig {
+  enabled: boolean;
+  emissionRate: number;
+  particleLifetime: number;
+  particleSize: number;
+  particleSpeed: number;
+  particleColor: string;
+  maxParticles: number;
+}
+
 export interface OrbState {
   isAnimating: boolean;
   interactionMode: OrbInteractionMode;
@@ -35,6 +45,7 @@ export interface OrbState {
   transitionDuration: number;
   transitionProgress: number;
   previousState: OrbAnimationState | null;
+  particleSystem: ParticleSystemConfig;
 }
 
 export type OrbInteractionMode = 'passive' | 'active';

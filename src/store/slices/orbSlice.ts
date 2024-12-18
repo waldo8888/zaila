@@ -1,6 +1,16 @@
 import { StateCreator } from 'zustand';
 import { Store, OrbSlice } from '../types';
-import { OrbState, OrbAnimationState, OrbInteractionMode } from './types';
+import { OrbState, OrbAnimationState, OrbInteractionMode, ParticleSystemConfig } from './types';
+
+const DEFAULT_PARTICLE_CONFIG: ParticleSystemConfig = {
+  enabled: false,
+  emissionRate: 50,
+  particleLifetime: 2,
+  particleSize: 2,
+  particleSpeed: 0.5,
+  particleColor: '#ffffff',
+  maxParticles: 1000,
+};
 
 const DEFAULT_ORB_STATE: OrbState = {
   isAnimating: false,
@@ -9,6 +19,7 @@ const DEFAULT_ORB_STATE: OrbState = {
   transitionDuration: 0.5,
   transitionProgress: 0,
   previousState: null,
+  particleSystem: DEFAULT_PARTICLE_CONFIG,
 };
 
 export const createOrbSlice: StateCreator<
@@ -29,10 +40,22 @@ export const createOrbSlice: StateCreator<
       orb: { ...state.orb, interactionMode }
     })),
 
-  setAnimationState: (animationState: OrbAnimationState) =>
+  setAnimationState: (animationState: OrbAnimationState) => {
+    const particleSystem = {
+      ...DEFAULT_PARTICLE_CONFIG,
+      enabled: animationState === 'processing',
+      emissionRate: animationState === 'processing' ? 100 : 50,
+      particleColor: animationState === 'processing' ? '#64B5F6' : '#ffffff',
+    };
+
     set((state) => ({
-      orb: { ...state.orb, animationState }
-    })),
+      orb: {
+        ...state.orb,
+        animationState,
+        particleSystem,
+      }
+    }));
+  },
 
   setTransitionProgress: (transitionProgress: number) =>
     set((state) => ({
@@ -47,5 +70,16 @@ export const createOrbSlice: StateCreator<
   setTransitionDuration: (transitionDuration: number) =>
     set((state) => ({
       orb: { ...state.orb, transitionDuration }
+    })),
+
+  updateParticleSystem: (config: Partial<ParticleSystemConfig>) =>
+    set((state) => ({
+      orb: {
+        ...state.orb,
+        particleSystem: {
+          ...state.orb.particleSystem,
+          ...config,
+        }
+      }
     })),
 });
