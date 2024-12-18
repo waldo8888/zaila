@@ -1,34 +1,51 @@
 import { StateCreator } from 'zustand';
-import { RootState } from '../types';
-import { OrbState } from './types';
+import { Store, OrbSlice } from '../types';
+import { OrbState, OrbAnimationState, OrbInteractionMode } from './types';
 
 const DEFAULT_ORB_STATE: OrbState = {
   isAnimating: false,
-  interactionMode: 'idle',
+  interactionMode: 'passive',
+  animationState: 'idle',
+  transitionDuration: 0.5,
+  transitionProgress: 0,
+  previousState: null,
 };
 
-export interface OrbSlice {
-  orb: OrbState;
-  setAnimating: (isAnimating: boolean) => void;
-  setInteractionMode: (mode: OrbState['interactionMode']) => void;
-}
-
-export const createOrbSlice: StateCreator<RootState, [], [], OrbSlice> = (set) => ({
+export const createOrbSlice: StateCreator<
+  Store,
+  [],
+  [['zustand/devtools', never]],
+  OrbSlice
+> = (set, get, store) => ({
   orb: DEFAULT_ORB_STATE,
 
   setAnimating: (isAnimating: boolean) =>
-    set((state: RootState) => ({
-      orb: {
-        ...state.orb,
-        isAnimating,
-      },
+    set((state) => ({
+      orb: { ...state.orb, isAnimating }
     })),
 
-  setInteractionMode: (mode: OrbState['interactionMode']) =>
-    set((state: RootState) => ({
-      orb: {
-        ...state.orb,
-        interactionMode: mode,
-      },
+  setInteractionMode: (interactionMode: OrbInteractionMode) =>
+    set((state) => ({
+      orb: { ...state.orb, interactionMode }
+    })),
+
+  setAnimationState: (animationState: OrbAnimationState) =>
+    set((state) => ({
+      orb: { ...state.orb, animationState }
+    })),
+
+  setTransitionProgress: (transitionProgress: number) =>
+    set((state) => ({
+      orb: { ...state.orb, transitionProgress }
+    })),
+
+  setPreviousState: (previousState: OrbAnimationState | null) =>
+    set((state) => ({
+      orb: { ...state.orb, previousState }
+    })),
+
+  setTransitionDuration: (transitionDuration: number) =>
+    set((state) => ({
+      orb: { ...state.orb, transitionDuration }
     })),
 });

@@ -3,17 +3,30 @@
  */
 
 import { StateCreator } from 'zustand';
-import { ErrorState, ErrorType, UIState, OrbState, SessionState, PreferencesState } from './slices/types';
+import { 
+  UIState, 
+  ErrorState, 
+  ErrorType,
+  OrbState, 
+  OrbAnimationState, 
+  OrbInteractionMode,
+  SessionState,
+  PreferencesState
+} from './slices/types';
 
-// Root State Type
-export interface RootState {
-  ui: UIState;
-  orb: OrbState;
-  session: SessionState;
-  preferences: PreferencesState;
-}
+// Re-export types
+export type { 
+  UIState, 
+  ErrorState, 
+  ErrorType,
+  OrbState, 
+  OrbAnimationState, 
+  OrbInteractionMode,
+  SessionState,
+  PreferencesState
+};
 
-// Slice Types
+// Slice Interfaces
 export interface UISlice {
   ui: UIState;
   setLoading: (isLoading: boolean) => void;
@@ -25,27 +38,20 @@ export interface UISlice {
 export interface OrbSlice {
   orb: OrbState;
   setAnimating: (isAnimating: boolean) => void;
-  setInteractionMode: (mode: OrbState['interactionMode']) => void;
+  setInteractionMode: (mode: OrbInteractionMode) => void;
+  setAnimationState: (state: OrbAnimationState) => void;
+  setTransitionProgress: (progress: number) => void;
+  setPreviousState: (state: OrbAnimationState | null) => void;
+  setTransitionDuration: (duration: number) => void;
 }
 
 export interface SessionSlice {
   session: SessionState;
-  setActive: (isActive: boolean) => void;
-  updateContext: (context: Record<string, unknown>) => void;
-  clearSession: () => void;
 }
 
 export interface PreferencesSlice {
   preferences: PreferencesState;
-  setTheme: (theme: PreferencesState['theme']) => void;
-  setFontSize: (fontSize: number) => void;
-  setAutoSave: (autoSave: boolean) => void;
-  setNotifications: (notifications: boolean) => void;
 }
 
-// Store State Type
-export type StoreState = RootState;
+// Combined Store Type
 export type Store = UISlice & OrbSlice & SessionSlice & PreferencesSlice;
-
-// Re-export common types
-export type { ErrorState, ErrorType };

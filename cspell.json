@@ -9,7 +9,9 @@
     "headlessui",
     "labelledby",
     "metalness",
+    "partialize",
     "scrollbars",
+    "timeframe",
     "Zaila"
   ],
   "ignorePaths": [

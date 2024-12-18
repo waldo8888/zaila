@@ -64,6 +64,54 @@ export const stateAnimationVariants = {
   },
 };
 
+export const orbStateAnimationVariants = {
+  idle: {
+    scale: 1,
+    opacity: 0.8,
+    transition: { duration: ANIMATION_DURATION.normal, ease: ANIMATION_EASE.smooth },
+  },
+  processing: {
+    scale: 1.05,
+    opacity: 1,
+    transition: { duration: ANIMATION_DURATION.normal, ease: ANIMATION_EASE.spring },
+  },
+  success: {
+    scale: 1.1,
+    opacity: 1,
+    transition: { duration: ANIMATION_DURATION.fast, ease: ANIMATION_EASE.bounce },
+  },
+  error: {
+    scale: 0.95,
+    opacity: 0.9,
+    transition: { duration: ANIMATION_DURATION.fast, ease: ANIMATION_EASE.smooth },
+  },
+  active: {
+    scale: 1.15,
+    opacity: 1,
+    transition: { duration: ANIMATION_DURATION.normal, ease: ANIMATION_EASE.spring },
+  },
+  inactive: {
+    scale: 0.9,
+    opacity: 0.7,
+    transition: { duration: ANIMATION_DURATION.slow, ease: ANIMATION_EASE.smooth },
+  },
+};
+
+// Helper function for smooth orb state transitions
+export const interpolateOrbState = (
+  fromState: keyof typeof orbStateAnimationVariants,
+  toState: keyof typeof orbStateAnimationVariants,
+  progress: number
+) => {
+  const from = orbStateAnimationVariants[fromState];
+  const to = orbStateAnimationVariants[toState];
+  
+  return {
+    scale: from.scale + (to.scale - from.scale) * progress,
+    opacity: from.opacity + (to.opacity - from.opacity) * progress,
+  };
+};
+
 // Type definitions for animation states
 export type AnimationState = 'idle' | 'loading' | 'success' | 'error';
 export type AnimationDuration = keyof typeof ANIMATION_DURATION;

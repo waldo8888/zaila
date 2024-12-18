@@ -1,5 +1,5 @@
 import { StateCreator } from 'zustand';
-import { RootState } from '../types';
+import { Store, PreferencesSlice } from '../types';
 import { PreferencesState } from './types';
 
 const DEFAULT_PREFERENCES_STATE: PreferencesState = {
@@ -9,34 +9,31 @@ const DEFAULT_PREFERENCES_STATE: PreferencesState = {
   notifications: true,
 };
 
-export const createPreferencesSlice: StateCreator<RootState, [], [], PreferencesSlice> = (set) => ({
+export const createPreferencesSlice: StateCreator<
+  Store,
+  [],
+  [['zustand/devtools', never]],
+  PreferencesSlice
+> = (set, get, store) => ({
   preferences: DEFAULT_PREFERENCES_STATE,
 
-  setTheme: (theme) =>
+  setTheme: (theme: PreferencesState['theme']) =>
     set((state) => ({
       preferences: { ...state.preferences, theme }
     })),
 
-  setFontSize: (fontSize) =>
+  setFontSize: (fontSize: number) =>
     set((state) => ({
       preferences: { ...state.preferences, fontSize }
     })),
 
-  setAutoSave: (autoSave) =>
+  setAutoSave: (autoSave: boolean) =>
     set((state) => ({
       preferences: { ...state.preferences, autoSave }
     })),
 
-  setNotifications: (notifications) =>
+  setNotifications: (notifications: boolean) =>
     set((state) => ({
       preferences: { ...state.preferences, notifications }
     })),
 });
-
-export interface PreferencesSlice {
-  preferences: PreferencesState;
-  setTheme: (theme: PreferencesState['theme']) => void;
-  setFontSize: (fontSize: number) => void;
-  setAutoSave: (autoSave: boolean) => void;
-  setNotifications: (notifications: boolean) => void;
-}

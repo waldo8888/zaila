@@ -31,9 +31,21 @@ export interface UIState {
 export interface OrbState {
   isAnimating: boolean;
   interactionMode: OrbInteractionMode;
+  animationState: OrbAnimationState;
+  transitionDuration: number;
+  transitionProgress: number;
+  previousState: OrbAnimationState | null;
 }
 
-export type OrbInteractionMode = 'idle' | 'rotating' | 'zooming';
+export type OrbInteractionMode = 'passive' | 'active';
+
+export type OrbAnimationState = 
+  | 'idle' 
+  | 'processing' 
+  | 'success' 
+  | 'error' 
+  | 'active' 
+  | 'inactive';
 
 // Session State Types
 export interface SessionState {
