@@ -1,23 +1,18 @@
 import { StateCreator } from 'zustand';
-import { Store, PreferencesSlice } from '../types';
-import { PreferencesState } from './types';
+import { Store } from '../types';
+import { PreferencesState, PreferencesSlice } from './types';
 
 const DEFAULT_PREFERENCES_STATE: PreferencesState = {
   theme: 'light',
-  fontSize: 14,
+  fontSize: 16,
   autoSave: true,
   notifications: true,
 };
 
-export const createPreferencesSlice: StateCreator<
-  Store,
-  [],
-  [['zustand/devtools', never]],
-  PreferencesSlice
-> = (set, get, store) => ({
+export const createPreferencesSlice: StateCreator<Store, [], [], PreferencesSlice> = (set) => ({
   preferences: DEFAULT_PREFERENCES_STATE,
 
-  setTheme: (theme: PreferencesState['theme']) =>
+  setTheme: (theme: 'light' | 'dark') =>
     set((state) => ({
       preferences: { ...state.preferences, theme }
     })),
@@ -35,5 +30,5 @@ export const createPreferencesSlice: StateCreator<
   setNotifications: (notifications: boolean) =>
     set((state) => ({
       preferences: { ...state.preferences, notifications }
-    })),
+    }))
 });

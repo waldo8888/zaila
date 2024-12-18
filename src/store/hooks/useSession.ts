@@ -8,66 +8,92 @@ export const useSession = () => {
   const store = useStore();
   const { session } = store;
 
+  const setActive = useCallback((isActive: boolean) => {
+    store.setSessionActive(isActive);
+  }, [store]);
+
+  const updateContext = useCallback((context: Record<string, unknown>) => {
+    store.updateSessionContext(context);
+  }, [store]);
+
+  const updateMetadata = useCallback((metadata: Record<string, unknown>) => {
+    store.updateSessionMetadata(metadata);
+  }, [store]);
+
+  const getLastActivity = useCallback(() => {
+    return session.lastActivity;
+  }, [session]);
+
+  const isExpired = useCallback((timeout: number) => {
+    const now = Date.now();
+    const lastActivity = session.lastActivity;
+    return now - lastActivity > timeout;
+  }, [session]);
+
+  const getContext = useCallback(() => {
+    return session.context;
+  }, [session]);
+
+  const getMetadata = useCallback(() => {
+    return session.metadata;
+  }, [session]);
+
+  const clearContext = useCallback(() => {
+    store.updateSessionContext({});
+  }, [store]);
+
+  const clearMetadata = useCallback(() => {
+    store.updateSessionMetadata({});
+  }, [store]);
+
   // Update session activity
   useEffect(() => {
     const handleActivity = () => {
       if (!session.isActive) {
-        store.setSessionActive(true);
+        setActive(true);
       }
-      store.updateSessionMetadata({
+      updateMetadata({
         updatedAt: Date.now(),
       });
     };
 
-    // Monitor user activity
-    window.addEventListener('mousemove', handleActivity);
-    window.addEventListener('keydown', handleActivity);
     window.addEventListener('click', handleActivity);
 
     // Check session timeout periodically
     const checkTimeout = setInterval(() => {
-      if (session.lastActive) {
-        const inactiveTime = Date.now() - session.lastActive;
+      if (session.lastActivity) {
+        const inactiveTime = Date.now() - session.lastActivity;
         if (inactiveTime > SESSION_TIMEOUT && session.isActive) {
-          store.setSessionActive(false);
-          store.clearContext();
+          setActive(false);
+          clearContext();
         }
       }
     }, 60000); // Check every minute
 
     return () => {
-      window.removeEventListener('mousemove', handleActivity);
-      window.removeEventListener('keydown', handleActivity);
       window.removeEventListener('click', handleActivity);
       clearInterval(checkTimeout);
     };
-  }, [session.isActive, session.lastActive, store]);
-
-  const updateContext = useCallback(
-    (context: Record<string, unknown>) => {
-      if (session.isActive) {
-        store.updateContext(context);
-        store.updateSessionMetadata({
-          updatedAt: Date.now(),
-        });
-      }
-    },
-    [session.isActive, store]
-  );
-
-  const clearContext = useCallback(() => {
-    store.clearContext();
-    store.updateSessionMetadata({
-      updatedAt: Date.now(),
-    });
-  }, [store]);
+  }, [session.isActive, session.lastActivity, setActive, updateMetadata, clearContext, store]);
 
   return {
-    context: session.context,
+    // State getters
     isActive: session.isActive,
-    lastActive: session.lastActive,
+    lastActivity: session.lastActivity,
+    context: session.context,
     metadata: session.metadata,
+
+    // Actions
+    setActive,
     updateContext,
+    updateMetadata,
     clearContext,
+    clearMetadata,
+
+    // Helper methods
+    getLastActivity,
+    isExpired,
+    getContext,
+    getMetadata
   };
 };

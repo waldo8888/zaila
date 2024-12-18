@@ -1,56 +1,83 @@
-import { useStore } from './index';
-import type { StoreState, OrbState } from './types';
+import { useStore } from './store';
+import { Store } from './types';
+import { OrbState, SessionState, UIState, PreferencesState } from './slices/types';
 
-// Type-safe selector hooks for UI state
-export const useUIState = () => useStore((state) => state.ui);
-export const useLoading = () => useStore((state) => state.ui.isLoading);
-export const useError = () => useStore((state) => state.ui.error);
-export const useSuccess = () => useStore((state) => state.ui.success);
-
-// Type-safe selector hooks for Orb state
-export const useOrbState = () => useStore((state) => state.orb);
-export const useOrbAnimationState = () => 
-  useStore((state) => state.orb.animationState);
-export const useOrbInteractionMode = () =>
-  useStore((state) => state.orb.interactionMode);
-export const useOrbAnimationSpeed = () =>
-  useStore((state) => state.orb.animationSpeed);
-
-// Type-safe selector hooks for Session state
-export const useSessionState = () => useStore((state) => state.session);
-export const useSessionContext = () => useStore((state) => state.session.context);
-export const useSessionMetadata = () => useStore((state) => state.session.metadata);
-export const useSessionActive = () => useStore((state) => state.session.isActive);
-export const useLastActive = () => useStore((state) => state.session.lastActive);
-
-// Type-safe action hooks
-export const useUIActions = () => ({
-  setLoading: useStore((state) => state.setLoading),
-  setError: useStore((state) => state.setError),
-  setSuccess: useStore((state) => state.setSuccess),
-  clearError: useStore((state) => state.clearError),
-  retryLastAction: useStore((state) => state.retryLastAction),
-  resetErrorState: useStore((state) => state.resetErrorState),
-});
-
-export const useOrbActions = () => {
-  const store = useStore();
+// UI Hooks
+export const useUIState = () => useStore((state: Store) => state.ui);
+export const useUIActions = () => {
+  const {
+    setLoading,
+    setError,
+    setSuccess,
+    clearError,
+    retryLastAction,
+    resetErrorState,
+    addHistoryEntry,
+    clearHistory,
+    undoLastAction,
+    redoLastAction
+  } = useStore();
   return {
-    setAnimationState: (state: OrbState['animationState']) => 
-      store.setOrbAnimationState(state),
-    setInteractionMode: (mode: OrbState['interactionMode']) =>
-      store.setOrbInteractionMode(mode),
-    setOrbAnimationSpeed: (speed: OrbState['animationSpeed']) =>
-      store.setOrbAnimationSpeed(speed)
+    setLoading,
+    setError,
+    setSuccess,
+    clearError,
+    retryLastAction,
+    resetErrorState,
+    addHistoryEntry,
+    clearHistory,
+    undoLastAction,
+    redoLastAction
   };
 };
 
+// Session Hooks
+export const useSessionState = () => useStore((state: Store) => state.session);
 export const useSessionActions = () => {
-  const store = useStore();
+  const {
+    setSessionActive,
+    updateSessionContext,
+    updateSessionMetadata
+  } = useStore();
   return {
-    updateContext: store.updateContext,
-    clearContext: store.clearContext,
-    setSessionActive: store.setSessionActive,
-    updateSessionMetadata: store.updateSessionMetadata,
+    setSessionActive,
+    updateSessionContext,
+    updateSessionMetadata
+  };
+};
+
+// Orb Hooks
+export const useOrbState = () => useStore((state: Store) => state.orb);
+export const useOrbActions = () => {
+  const {
+    setAnimating,
+    setAnimationState,
+    setInteractionMode,
+    setParticleSystem,
+    setAnimationSpeed
+  } = useStore();
+  return {
+    setAnimating,
+    setAnimationState,
+    setInteractionMode,
+    setParticleSystem,
+    setAnimationSpeed
+  };
+};
+
+// Preferences Hooks
+export const usePreferencesState = () => useStore((state: Store) => state.preferences);
+export const usePreferencesActions = () => {
+  const {
+    setTheme,
+    setFontSize,
+    setAutoSave,
+    setNotifications
+  } = useStore();
+  return {
+    setTheme,
+    setFontSize,
+    setAutoSave,
+    setNotifications
   };
 };

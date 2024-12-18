@@ -5,13 +5,18 @@
     "describedby",
     "drei",
     "extralight",
+    "frameloop",
     "haspopup",
     "headlessui",
+    "highp",
     "labelledby",
     "metalness",
     "partialize",
     "scrollbars",
+    "smoothstep",
+    "Three.js",
     "timeframe",
+    "WebGL",
     "Zaila"
   ],
   "ignorePaths": [

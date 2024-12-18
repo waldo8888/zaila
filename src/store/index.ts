@@ -1,29 +1,30 @@
 import { create } from 'zustand';
-import { errorMiddleware } from './middleware/error';
-import { persistMiddleware } from './middleware/persistence';
+import { devtools } from 'zustand/middleware';
 import { createUISlice } from './slices/uiSlice';
 import { createOrbSlice } from './slices/orbSlice';
 import { createSessionSlice } from './slices/sessionSlice';
 import { createPreferencesSlice } from './slices/preferencesSlice';
 import type { Store } from './types';
 
-// Create store with middleware
-const createStore = () =>
-  create<Store>()(
-    persistMiddleware(
-      errorMiddleware(
-        (...args) => ({
-          ...createUISlice(...args),
-          ...createOrbSlice(...args),
-          ...createSessionSlice(...args),
-          ...createPreferencesSlice(...args),
-        })
-      )
-    )
-  );
+// Create store with all slices
+export const useStore = create<Store>()(
+  devtools(
+    (...a) => {
+      const uiSlice = createUISlice(...a);
+      const orbSlice = createOrbSlice(...a);
+      const sessionSlice = createSessionSlice(...a);
+      const preferencesSlice = createPreferencesSlice(...a);
 
-// Create and export store instance
-export const useStore = createStore();
+      return {
+        ...uiSlice,
+        ...orbSlice,
+        ...sessionSlice,
+        ...preferencesSlice,
+      };
+    },
+    { name: 'Zaila Store' }
+  )
+);
 
 // Export store hooks
 export * from './hooks';

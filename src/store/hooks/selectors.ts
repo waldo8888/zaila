@@ -1,86 +1,115 @@
 import { useCallback } from 'react';
-import { useStore } from '..';
-import type { Store } from '../types';
+import { useStore } from '../store';
+import { Store } from '../types';
+import {
+  OrbState,
+  OrbAnimationState,
+  OrbInteractionMode,
+  SessionState,
+  UIState,
+  PreferencesState,
+  ErrorState
+} from '../slices/types';
 
 // UI Selectors
-export const selectIsLoading = (state: Store) => state.ui.isLoading;
-export const selectError = (state: Store) => state.ui.error;
-export const selectSuccess = (state: Store) => state.ui.success;
+export const useUIState = () => useStore((state: Store) => state.ui);
+export const useLoading = () => useStore((state: Store) => state.ui.isLoading);
+export const useError = () => useStore((state: Store) => state.ui.error);
+export const useSuccess = () => useStore((state: Store) => state.ui.success);
+export const useHistory = () => useStore((state: Store) => state.ui.history);
+export const useHistoryIndex = () => useStore((state: Store) => state.ui.historyIndex);
+
+export const useUIActions = () => {
+  const {
+    setLoading,
+    setError,
+    setSuccess,
+    clearError,
+    retryLastAction,
+    resetErrorState,
+    addHistoryEntry,
+    clearHistory,
+    undoLastAction,
+    redoLastAction
+  } = useStore();
+
+  return {
+    setLoading,
+    setError,
+    setSuccess,
+    clearError,
+    retryLastAction,
+    resetErrorState,
+    addHistoryEntry,
+    clearHistory,
+    undoLastAction,
+    redoLastAction
+  };
+};
 
 // Orb Selectors
-export const selectIsAnimating = (state: Store) => state.orb.isAnimating;
-export const selectInteractionMode = (state: Store) => state.orb.interactionMode;
-
-// Session Selectors
-export const selectIsActive = (state: Store) => state.session.isActive;
-export const selectLastActivity = (state: Store) => state.session.lastActivity;
-export const selectContext = (state: Store) => state.session.context;
-
-// Preferences Selectors
-export const selectTheme = (state: Store) => state.preferences.theme;
-export const selectFontSize = (state: Store) => state.preferences.fontSize;
-export const selectAutoSave = (state: Store) => state.preferences.autoSave;
-export const selectNotifications = (state: Store) => state.preferences.notifications;
-
-// Hook Selectors
-export const useUIState = () => ({
-  isLoading: useStore(selectIsLoading),
-  error: useStore(selectError),
-  success: useStore(selectSuccess),
-});
-
-export const useOrbState = () => ({
-  isAnimating: useStore(selectIsAnimating),
-  interactionMode: useStore(selectInteractionMode),
-});
-
-export const useSessionState = () => ({
-  isActive: useStore(selectIsActive),
-  lastActivity: useStore(selectLastActivity),
-  context: useStore(selectContext),
-});
-
-export const usePreferencesState = () => ({
-  theme: useStore(selectTheme),
-  fontSize: useStore(selectFontSize),
-  autoSave: useStore(selectAutoSave),
-  notifications: useStore(selectNotifications),
-});
-
-// Action Hooks
-export const useUIActions = () => {
-  const store = useStore();
-  return {
-    setLoading: store.setLoading,
-    setError: store.setError,
-    setSuccess: store.setSuccess,
-    clearError: store.clearError,
-  };
-};
+export const useOrbState = () => useStore((state: Store) => state.orb);
+export const useOrbAnimationState = () => useStore((state: Store) => state.orb.animationState);
+export const useOrbInteractionMode = () => useStore((state: Store) => state.orb.interactionMode);
+export const useOrbAnimationSpeed = () => useStore((state: Store) => state.orb.animationSpeed);
 
 export const useOrbActions = () => {
-  const store = useStore();
+  const {
+    setAnimating,
+    setAnimationState,
+    setInteractionMode,
+    setParticleSystem,
+    setAnimationSpeed
+  } = useStore();
+
   return {
-    setAnimating: store.setAnimating,
-    setInteractionMode: store.setInteractionMode,
+    setAnimating,
+    setAnimationState,
+    setInteractionMode,
+    setParticleSystem,
+    setAnimationSpeed
   };
 };
+
+// Session Selectors
+export const useSessionState = () => useStore((state: Store) => state.session);
+export const useSessionContext = () => useStore((state: Store) => state.session.context);
+export const useSessionActive = () => useStore((state: Store) => state.session.isActive);
+export const useLastActivity = () => useStore((state: Store) => state.session.lastActivity);
 
 export const useSessionActions = () => {
-  const store = useStore();
+  const {
+    setSessionActive,
+    updateSessionContext,
+    updateSessionMetadata
+  } = useStore();
+
   return {
-    setActive: store.setActive,
-    updateContext: store.updateContext,
-    clearSession: store.clearSession,
+    setSessionActive,
+    updateSessionContext,
+    updateSessionMetadata
   };
 };
 
+// Preferences Selectors
+export const usePreferencesState = () => useStore((state: Store) => state.preferences);
+export const useTheme = () => useStore((state: Store) => state.preferences.theme);
+export const useFontSize = () => useStore((state: Store) => state.preferences.fontSize);
+export const useAutoSave = () => useStore((state: Store) => state.preferences.autoSave);
+export const useNotifications = () => useStore((state: Store) => state.preferences.notifications);
+
 export const usePreferencesActions = () => {
-  const store = useStore();
+  const {
+    setTheme,
+    setFontSize,
+    setAutoSave,
+    setNotifications
+  } = useStore();
+
   return {
-    setTheme: store.setTheme,
-    setFontSize: store.setFontSize,
-    setAutoSave: store.setAutoSave,
-    setNotifications: store.setNotifications,
+    setTheme,
+    setFontSize,
+    setAutoSave,
+    setNotifications
   };
 };

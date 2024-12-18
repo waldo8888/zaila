@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useMemo } from 'react';
+import { useRef, useMemo, useEffect, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { useOrbState } from '@/store/hooks/useOrb';
 import { OrbState } from '@/store/types';
@@ -60,17 +60,16 @@ const fragmentShader = `
   varying vec3 vColor;
 
   void main() {
-      // Create a circular point
       vec2 center = gl_PointCoord - vec2(0.5);
       float dist = length(center);
-      float alpha = smoothstep(0.5, 0.4, dist) * uAlpha;
+      float alpha = step(dist, 0.45); // Remove uAlpha dependency
 
       gl_FragColor = vec4(vColor, alpha);
   }
 `;
 
 interface OrbConfig {
-  baseColor: string;
+  baseColor: string;  
   emissiveColor: string;
   speed: number;
   noiseStrength: number;
@@ -138,8 +137,8 @@ function getStateConfig(state: OrbState['animationState']): OrbConfig {
     case 'idle':
     default:
       return {
-        baseColor: '#90CAF9',
-        emissiveColor: '#42A5F5',
+        baseColor: '#AF69EE',
+        emissiveColor: '#6F2DA8',
         speed: 0.8,
         noiseStrength: 0.1,
         noiseFrequency: 1.0,
@@ -154,6 +153,16 @@ export const Orb: React.FC<OrbProps> = ({ state = 'idle' }) => {
   const materialRef = useRef<ShaderMaterial>(null);
   const orbState = useOrbState();
   const config = getStateConfig(state);
+  const [time, setTime] = useState(0);
+
+  // Animation loop to change shape
+  useFrame((state) => {
+    if (materialRef.current) {
+      materialRef.current.uniforms.uTime.value = state.clock.getElapsedTime();
+      materialRef.current.opacity = 1.0; // Maintain opacity
+    }
+    setTime(state.clock.getElapsedTime());
+  });
 
   // Create geometry with attributes
   const geometry = useMemo(() => {
@@ -165,18 +174,45 @@ export const Orb: React.FC<OrbProps> = ({ state = 'idle' }) => {
     const color = new Color(config.baseColor);
 
     // Create points distributed on a sphere
-    const numPoints = 2000;
+    const numPoints = 5000; // Reduced number of points
     for (let i = 0; i < numPoints; i++) {
-      const theta = Math.random() * Math.PI * 2;
+      const theta = Math.random() * Math.PI * 4; // Reduced theta range
       const phi = Math.acos(2 * Math.random() - 1);
-      const x = Math.sin(phi) * Math.cos(theta);
-      const y = Math.sin(phi) * Math.sin(theta);
-      const z = Math.cos(phi);
+      
+      // Individual particle movement
+      const particleOffset = i * 0.001;
+      const slowTime = time * 1.5; // Adjusted speed
+      
+      // Gentle floating motion (reduced range)
+      const floatY = Math.sin(slowTime + particleOffset) * 0.05;
+      const floatX = Math.cos(slowTime * 0.7 + particleOffset) * 0.05;
+      
+      // Smooth shape morphing (constrained range)
+      const shapePhase = Math.sin(slowTime * 0.5 + particleOffset) * 0.2;
+      const wavePhase = Math.sin(theta * 2 + slowTime * 0.3) * 0.15;
+      
+      // Base radius with controlled variations
+      const radius = 0.8 + 
+        Math.max(-0.2, Math.min(0.2, wavePhase + shapePhase)) +
+        Math.sin(phi * 2 + slowTime * 0.2) * 0.05;
+
+      // Calculate position with floating motion
+      const x = (radius * Math.sin(phi) * Math.cos(theta)) + floatX;
+      const y = (radius * Math.sin(phi) * Math.sin(theta)) + floatY;
+      const z = radius * Math.cos(phi);
 
       positions.push(x, y, z);
       colors.push(color.r, color.g, color.b);
-      sizes.push(2 + Math.random() * 2);
-      angles.push(Math.random() * Math.PI * 2);
+      
+      // Gentle size pulsing with minimum size
+      const sizeBase = 0.04; // Slightly larger base size
+      const sizePulse = Math.sin(slowTime * 1.5 + particleOffset) * 0.09;
+      const finalSize = Math.max(0.03, sizeBase + sizePulse + Math.random() * 0.15); // Adjusted size variation
+      sizes.push(finalSize);
+      
+      // Smooth angle changes
+      const angleBase = Math.sin(slowTime * 1.2 + particleOffset) * Math.PI;
+      angles.push(angleBase);
     }
 
     geometry.setAttribute('position', new Float32BufferAttribute(positions, 3));
@@ -185,7 +221,7 @@ export const Orb: React.FC<OrbProps> = ({ state = 'idle' }) => {
     geometry.setAttribute('angle', new Float32BufferAttribute(angles, 1));
 
     return geometry;
-  }, [config.baseColor]);
+  }, [config.baseColor, time]); // Add time as a dependency
 
   // Create material with uniforms
   const material = useMemo(() => {
@@ -198,20 +234,14 @@ export const Orb: React.FC<OrbProps> = ({ state = 'idle' }) => {
         uSpeed: { value: config.speed },
         uNoiseStrength: { value: config.noiseStrength },
         uNoiseFrequency: { value: config.noiseFrequency },
-        uAlpha: { value: config.alpha },
       },
       transparent: true,
-      depthWrite: false,
+      depthWrite: true,
+      depthTest: true,
       blending: AdditiveBlending,
+      opacity: 1.0, // Set fixed opacity
     });
   }, [config]);
-
-  // Animation loop
-  useFrame((state) => {
-    if (materialRef.current) {
-      materialRef.current.uniforms.uTime.value = state.clock.getElapsedTime();
-    }
-  });
 
   return (
     <group>

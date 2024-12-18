@@ -1,13 +1,54 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useStore } from '@/store';
 import { useOrbState, useOrbActions } from '@/store/hooks';
 import { getStateHistory, clearStateHistory } from '@/store/middleware/debug';
 import { type OrbState } from '../../store/types';
+import { Stats } from '@react-three/drei';
 
 interface DebugPanelProps {
   className?: string;
+}
+
+// Performance monitoring hook
+function usePerformanceMonitor() {
+  const [stats, setStats] = useState({
+    fps: 0,
+    renderTime: 0,
+    triangles: 0,
+    memory: 0
+  });
+  const frameRef = useRef(0);
+  const lastTimeRef = useRef(performance.now());
+
+  useEffect(() => {
+    const updateStats = () => {
+      const currentTime = performance.now();
+      const deltaTime = currentTime - lastTimeRef.current;
+      const fps = Math.round(1000 / deltaTime);
+      
+      // Get memory usage if available
+      const memory = (performance as any).memory 
+        ? Math.round((performance as any).memory.usedJSHeapSize / 1048576) 
+        : 0;
+
+      setStats(prev => ({
+        ...prev,
+        fps: fps,
+        renderTime: Math.round(deltaTime * 100) / 100,
+        memory
+      }));
+
+      lastTimeRef.current = currentTime;
+      frameRef.current = requestAnimationFrame(updateStats);
+    };
+
+    frameRef.current = requestAnimationFrame(updateStats);
+    return () => cancelAnimationFrame(frameRef.current);
+  }, []);
+
+  return stats;
 }
 
 export const DebugPanel: React.FC<DebugPanelProps> = ({ className = '' }) => {
@@ -17,6 +58,7 @@ export const DebugPanel: React.FC<DebugPanelProps> = ({ className = '' }) => {
   const store = useStore();
   const { animationState, interactionMode, animationSpeed } = useOrbState();
   const { setAnimationState, setInteractionMode, setOrbAnimationSpeed } = useOrbActions();
+  const stats = usePerformanceMonitor();
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -116,6 +158,26 @@ export const DebugPanel: React.FC<DebugPanelProps> = ({ className = '' }) => {
             </div>
           </div>
 
+          {/* Performance Stats */}
+          <div className="mb-4 p-4 bg-gray-800 rounded-lg">
+            <h4 className="text-sm text-gray-400 mb-2">Performance</h4>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="flex justify-between p-2 bg-gray-700 rounded">
+                <span>FPS</span>
+                <span className="text-green-400">{stats.fps}</span>
+              </div>
+              <div className="flex justify-between p-2 bg-gray-700 rounded">
+                <span>Render Time</span>
+                <span className="text-blue-400">{stats.renderTime}ms</span>
+              </div>
+              <div className="flex justify-between p-2 bg-gray-700 rounded">
+                <span>Memory</span>
+                <span className="text-purple-400">{stats.memory}MB</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Existing Debug Controls */}
           <div className="mb-4 p-4 bg-gray-800 rounded-lg">
             <h4 className="text-sm text-gray-400 mb-2">Orb Controls</h4>
             <div className="grid grid-cols-2 gap-2">

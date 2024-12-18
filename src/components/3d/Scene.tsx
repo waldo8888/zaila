@@ -1,6 +1,5 @@
 'use client'
 
-import { Environment } from '@react-three/drei'
 import { Canvas } from './Canvas'
 import { Suspense, memo } from 'react'
 import { Orb } from './Orb'
@@ -10,7 +9,6 @@ import { useOrbState } from '@/store/hooks'
 
 // Memoize static components
 const MemoizedLights = memo(Lights)
-const MemoizedEnvironment = memo(Environment)
 
 const OrbWithState = () => {
   const { animationState } = useOrbState();
@@ -23,11 +21,6 @@ export default function Scene() {
       <Canvas>
         <color attach="background" args={['#000815']} />
         <Suspense fallback={null}>
-          <MemoizedEnvironment 
-            preset="city" 
-            background={false}
-            blur={0.5}
-          />
           <MemoizedLights />
           <OrbStateManager>
             <OrbWithState />

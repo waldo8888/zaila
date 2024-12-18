@@ -6,14 +6,22 @@ import { createSessionSlice } from './slices/sessionSlice';
 import { createPreferencesSlice } from './slices/preferencesSlice';
 import type { Store } from './types';
 
+// Create store with all slices
 export const useStore = create<Store>()(
   devtools(
-    (...a) => ({
-      ...createUISlice(...a),
-      ...createOrbSlice(...a),
-      ...createSessionSlice(...a),
-      ...createPreferencesSlice(...a),
-    }),
+    (...a) => {
+      const orbSlice = createOrbSlice(...a);
+      const uiSlice = createUISlice(...a);
+      const sessionSlice = createSessionSlice(...a);
+      const preferencesSlice = createPreferencesSlice(...a);
+
+      return {
+        ...orbSlice,
+        ...uiSlice,
+        ...sessionSlice,
+        ...preferencesSlice
+      };
+    },
     { name: 'Zaila Store' }
   )
 );

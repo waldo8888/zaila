@@ -1,41 +1,45 @@
 import { StateCreator } from 'zustand';
-import { Store, SessionSlice } from '../types';
-import { SessionState } from './types';
+import { Store } from '../types';
+import { SessionState, SessionSlice } from './types';
 
 const DEFAULT_SESSION_STATE: SessionState = {
   isActive: false,
   lastActivity: Date.now(),
   context: {},
+  metadata: {}
 };
 
-export const createSessionSlice: StateCreator<
-  Store,
-  [],
-  [['zustand/devtools', never]],
-  SessionSlice
-> = (set, get, store) => ({
+export const createSessionSlice: StateCreator<Store, [], [], SessionSlice> = (set) => ({
   session: DEFAULT_SESSION_STATE,
 
-  setActive: (isActive: boolean) =>
+  setSessionActive: (isActive: boolean) =>
     set((state) => ({
-      session: { 
-        ...state.session, 
+      session: {
+        ...state.session,
         isActive,
         lastActivity: Date.now()
       }
     })),
 
-  updateContext: (context: Record<string, unknown>) =>
+  updateSessionContext: (context: Record<string, unknown>) =>
     set((state) => ({
-      session: { 
-        ...state.session, 
-        context,
-        lastActivity: Date.now()
+      session: {
+        ...state.session,
+        context: {
+          ...state.session.context,
+          ...context
+        }
       }
     })),
 
-  clearSession: () =>
-    set(() => ({
-      session: DEFAULT_SESSION_STATE
-    })),
+  updateSessionMetadata: (metadata: Record<string, unknown>) =>
+    set((state) => ({
+      session: {
+        ...state.session,
+        metadata: {
+          ...(state.session.metadata || {}),
+          ...metadata
+        }
+      }
+    }))
 });
